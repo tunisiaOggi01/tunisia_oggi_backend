@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  EDITOR
+  ADVERTISER
+  VISITOR
+}
+
+enum PublicationStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  username     String   @unique
+  passwordHash String
+  imageUrl     String?
+  role         Role
+  createdAt    DateTime @default(now())
+
+  publications Publication[]
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  color       String   @default("#8B1E1E")
+  createdAt   DateTime @default(now())
+
+  publications Publication[]
+}
+
+model Publication {
+  id               String            @id @default(uuid())
+  title            String
+  slug             String            @unique
+  body             String
+  status           PublicationStatus @default(DRAFT)
+  publishedAt      DateTime?
+  scheduledAt      DateTime?
+  featuredImageUrl String?
+  views            Int               @default(0)
+  likes            Int               @default(0)
+  tags             String[]          @default([])
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  authorId   String
+  author     User     @relation(fields: [authorId], references: [id])
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  @@index([status, publishedAt])
+  @@index([categoryId])
+}
