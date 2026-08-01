@@ -23,6 +23,10 @@ export class QueryPublicationsDto {
   page?: number = 1;
 
   @IsOptional()
+  @IsString()
+  authorId?: string;
+
+  @IsOptional()
   @Type(() => Number)
   @IsInt()
   @Min(1)

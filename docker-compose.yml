@@ -1,0 +1,59 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tunisia_oggi
+      POSTGRES_PASSWORD: tunisia_oggi
+      POSTGRES_DB: tunisia_oggi_dev
+    ports: ["5432:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tunisia_oggi -d tunisia_oggi_dev"]
+      interval: 5s
+      retries: 5
+
+  postgres_test:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tunisia_oggi
+      POSTGRES_PASSWORD: tunisia_oggi
+      POSTGRES_DB: tunisia_oggi_test
+    ports: ["5433:5432"]
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      cache_from:
+        - backend-deps:latest
+        - backend-build:latest
+    image: tunisia-oggi-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://tunisia_oggi:tunisia_oggi@postgres:5432/tunisia_oggi_dev
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      JWT_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_IN: 7d
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost}
+    ports: ["3000:3000"]
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+      cache_from:
+        - frontend-deps:latest
+        - frontend-build:latest
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:3000}
+    image: tunisia-oggi-frontend
+    depends_on:
+      - backend
+    ports: ["80:80"]
+
+volumes:
+  pgdata:

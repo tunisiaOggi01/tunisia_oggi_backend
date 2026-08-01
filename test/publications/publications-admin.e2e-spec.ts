@@ -5,6 +5,8 @@ import request from 'supertest';
 import bcrypt from 'bcrypt';
 import { AppModule } from '../../src/app.module';
 import { PrismaService } from '../../src/prisma/prisma.service';
+import { ApiResponseInterceptor } from '../../src/common/api-response.interceptor';
+import { AllExceptionsFilter } from '../../src/common/api-exception.filter';
 
 describe('Publications admin (e2e)', () => {
   let app: INestApplication;
@@ -18,9 +20,12 @@ describe('Publications admin (e2e)', () => {
     app = moduleRef.createNestApplication();
     app.use(cookieParser());
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+    app.useGlobalInterceptors(new ApiResponseInterceptor());
+    app.useGlobalFilters(new AllExceptionsFilter());
     await app.init();
     prisma = app.get(PrismaService);
 
+    await prisma.$executeRawUnsafe('TRUNCATE TABLE "RefreshToken" CASCADE');
     await prisma.$executeRawUnsafe('TRUNCATE TABLE "Publication" CASCADE');
     await prisma.$executeRawUnsafe('TRUNCATE TABLE "Category" CASCADE');
     await prisma.$executeRawUnsafe('TRUNCATE TABLE "User" CASCADE');
@@ -44,7 +49,7 @@ describe('Publications admin (e2e)', () => {
       .post('/auth/login')
       .send({ email: 'admin@tunisiaoggi.com', password: 'ChangeMe123!' });
     cookie = login.headers['set-cookie'][0];
-    csrfToken = login.body.csrfToken;
+    csrfToken = login.body.data.csrfToken;
   });
 
   afterAll(async () => {
@@ -60,8 +65,8 @@ describe('Publications admin (e2e)', () => {
       .send({ title: 'Economic Outlook 2025', categoryId, body: 'Full body text', status: 'DRAFT' })
       .expect(201);
 
-    expect(create.body.slug).toBe('economic-outlook-2025');
-    expect(create.body.status).toBe('DRAFT');
+    expect(create.body.data.slug).toBe('economic-outlook-2025');
+    expect(create.body.data.status).toBe('DRAFT');
 
     const list = await request(app.getHttpServer())
       .get('/admin/publications')
@@ -69,7 +74,7 @@ describe('Publications admin (e2e)', () => {
       .set('X-CSRF-Token', csrfToken)
       .expect(200);
 
-    expect(list.body.data.some((p: any) => p.id === create.body.id)).toBe(true);
+    expect(list.body.data.data.some((p: any) => p.id === create.body.data.id)).toBe(true);
   });
 
   it('publishes a draft via PATCH and stamps publishedAt', async () => {
@@ -80,14 +85,14 @@ describe('Publications admin (e2e)', () => {
       .send({ title: 'Breaking News Today', categoryId, body: 'body', status: 'DRAFT' });
 
     const update = await request(app.getHttpServer())
-      .patch(`/admin/publications/${create.body.id}`)
+      .patch(`/admin/publications/${create.body.data.id}`)
       .set('Cookie', cookie)
       .set('X-CSRF-Token', csrfToken)
       .send({ status: 'PUBLISHED' })
       .expect(200);
 
-    expect(update.body.status).toBe('PUBLISHED');
-    expect(update.body.publishedAt).not.toBeNull();
+    expect(update.body.data.status).toBe('PUBLISHED');
+    expect(update.body.data.publishedAt).not.toBeNull();
   });
 
   it('returns dashboard stats with comments hardcoded to 0', async () => {
@@ -97,8 +102,8 @@ describe('Publications admin (e2e)', () => {
       .set('X-CSRF-Token', csrfToken)
       .expect(200);
 
-    expect(stats.body.comments).toBe(0);
-    expect(typeof stats.body.totalArticles).toBe('number');
+    expect(stats.body.data.comments).toBe(0);
+    expect(typeof stats.body.data.totalArticles).toBe('number');
   });
 
   it('deletes a publication', async () => {
@@ -109,7 +114,7 @@ describe('Publications admin (e2e)', () => {
       .send({ title: 'To Be Deleted', categoryId, body: 'body', status: 'DRAFT' });
 
     await request(app.getHttpServer())
-      .delete(`/admin/publications/${create.body.id}`)
+      .delete(`/admin/publications/${create.body.data.id}`)
       .set('Cookie', cookie)
       .set('X-CSRF-Token', csrfToken)
       .expect(204);

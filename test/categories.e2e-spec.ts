@@ -5,6 +5,8 @@ import request from 'supertest';
 import bcrypt from 'bcrypt';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { ApiResponseInterceptor } from '../src/common/api-response.interceptor';
+import { AllExceptionsFilter } from '../src/common/api-exception.filter';
 
 describe('Categories (e2e)', () => {
   let app: INestApplication;
@@ -17,9 +19,12 @@ describe('Categories (e2e)', () => {
     app = moduleRef.createNestApplication();
     app.use(cookieParser());
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+    app.useGlobalInterceptors(new ApiResponseInterceptor());
+    app.useGlobalFilters(new AllExceptionsFilter());
     await app.init();
     prisma = app.get(PrismaService);
 
+    await prisma.$executeRawUnsafe('TRUNCATE TABLE "RefreshToken" CASCADE');
     await prisma.$executeRawUnsafe('TRUNCATE TABLE "Publication" CASCADE');
     await prisma.$executeRawUnsafe('TRUNCATE TABLE "Category" CASCADE');
     await prisma.$executeRawUnsafe('TRUNCATE TABLE "User" CASCADE');
@@ -39,7 +44,7 @@ describe('Categories (e2e)', () => {
       .post('/auth/login')
       .send({ email: 'admin@tunisiaoggi.com', password: 'ChangeMe123!' });
     cookie = login.headers['set-cookie'][0];
-    csrfToken = login.body.csrfToken;
+    csrfToken = login.body.data.csrfToken;
   });
 
   afterAll(async () => {
@@ -72,19 +77,19 @@ describe('Categories (e2e)', () => {
       .send({ name: 'Sport', slug: 'sport', color: '#059669' })
       .expect(201);
 
-    expect(create.body.slug).toBe('sport');
+    expect(create.body.data.slug).toBe('sport');
 
     const update = await request(app.getHttpServer())
-      .patch(`/categories/${create.body.id}`)
+      .patch(`/categories/${create.body.data.id}`)
       .set('Cookie', cookie)
       .set('X-CSRF-Token', csrfToken)
       .send({ description: 'Sports news' })
       .expect(200);
 
-    expect(update.body.description).toBe('Sports news');
+    expect(update.body.data.description).toBe('Sports news');
 
     await request(app.getHttpServer())
-      .delete(`/categories/${create.body.id}`)
+      .delete(`/categories/${create.body.data.id}`)
       .set('Cookie', cookie)
       .set('X-CSRF-Token', csrfToken)
       .expect(204);

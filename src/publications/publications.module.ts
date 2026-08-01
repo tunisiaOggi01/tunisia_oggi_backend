@@ -1,7 +1,9 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from '../auth/auth.module';
+import { HtmlSanitizerService } from '../common/html-sanitizer.service';
 import { PublicationsAdminService } from './services/publications-admin.service';
-import { PublicationsPublicService } from './services/publications-public.service';
+import { PublicationsReaderService } from './services/public/publications-reader.service';
+import { PublicationsInteractionService } from './services/public/publications-interaction.service';
 import { SlugService } from './services/slug.service';
 import { PublicationsAdminController } from './controllers/publications-admin.controller';
 import { PublicationsPublicController } from './controllers/publications-public.controller';
@@ -9,6 +11,6 @@ import { PublicationsPublicController } from './controllers/publications-public.
 @Module({
   imports: [AuthModule],
   controllers: [PublicationsAdminController, PublicationsPublicController],
-  providers: [PublicationsAdminService, PublicationsPublicService, SlugService],
+  providers: [PublicationsAdminService, PublicationsReaderService, PublicationsInteractionService, SlugService, HtmlSanitizerService],
 })
 export class PublicationsModule {}

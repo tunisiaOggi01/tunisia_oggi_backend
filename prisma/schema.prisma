@@ -21,15 +21,24 @@ enum PublicationStatus {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  username     String   @unique
-  passwordHash String
-  imageUrl     String?
-  role         Role
-  createdAt    DateTime @default(now())
+  id               String   @id @default(uuid())
+  email            String   @unique
+  username         String   @unique
+  passwordHash     String?
+  googleId         String?  @unique
+  imageUrl         String?
+  description      String?
+  profileCompleted Boolean  @default(false)
+  heardAbout       String?
+  role             Role
+  createdAt        DateTime @default(now())
 
-  publications Publication[]
+  publications      Publication[]
+  refreshTokens     RefreshToken[]
+  pendingUploads    PendingUpload[]
+  publicationViews  PublicationView[]
+  reactions         PublicationReaction[]
+  comments          Comment[]
 }
 
 model Category {
@@ -54,15 +63,102 @@ model Publication {
   featuredImageUrl String?
   views            Int               @default(0)
   likes            Int               @default(0)
+  rankScore        Float             @default(0)
   tags             String[]          @default([])
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
 
-  authorId   String
-  author     User     @relation(fields: [authorId], references: [id])
-  categoryId String
-  category   Category @relation(fields: [categoryId], references: [id])
+  authorId          String
+  author            User                @relation(fields: [authorId], references: [id])
+  categoryId        String
+  category          Category            @relation(fields: [categoryId], references: [id])
+  publicationViews  PublicationView[]
+  reactions         PublicationReaction[]
+  comments          Comment[]
 
   @@index([status, publishedAt])
   @@index([categoryId])
+}
+
+model PendingUpload {
+  id        String   @id @default(uuid())
+  url       String
+  publicId  String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  tokenHash String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  familyId  String
+  expiresAt DateTime
+  isRevoked Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([tokenHash])
+  @@index([userId])
+}
+
+model PublicationView {
+  id            String      @id @default(uuid())
+  userId        String
+  publicationId String
+  createdAt     DateTime    @default(now())
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  publication Publication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, publicationId])
+  @@index([publicationId])
+}
+
+model PublicationReaction {
+  id            String   @id @default(uuid())
+  userId        String
+  publicationId String
+  type          String   @default("LIKE")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  publication Publication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, publicationId])
+  @@index([publicationId])
+}
+
+model OtpCode {
+  id        String   @id @default(uuid())
+  email     String
+  code      String
+  type      String   @default("PASSWORD_RESET")
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email, code])
+}
+
+model Comment {
+  id            String   @id @default(uuid())
+  body          String
+  userId        String
+  publicationId String
+  parentId      String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  publication Publication @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  parent      Comment?    @relation("CommentReplies", fields: [parentId], references: [id])
+  replies     Comment[]   @relation("CommentReplies")
+
+  @@index([publicationId, createdAt])
+  @@index([parentId])
 }

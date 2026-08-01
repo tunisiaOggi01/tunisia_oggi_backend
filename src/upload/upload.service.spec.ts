@@ -1,4 +1,4 @@
-import { UploadService } from './upload.service';
+import { UploadService } from './services/upload.service';
 
 jest.mock('cloudinary', () => ({
   v2: {
@@ -6,17 +6,22 @@ jest.mock('cloudinary', () => ({
     uploader: {
       upload_stream: jest.fn((_options, callback) => ({
         end: (_buffer: Buffer) => {
-          callback(null, { secure_url: 'https://res.cloudinary.com/demo/image/upload/v1/test.jpg' });
+          callback(null, { secure_url: 'https://res.cloudinary.com/demo/image/upload/v1/test.jpg', public_id: 'test' });
         },
       })),
     },
   },
 }));
 
+const mockPrisma = { pendingUpload: { create: jest.fn().mockResolvedValue({}) } } as any;
+
 describe('UploadService', () => {
   it('resolves with the Cloudinary secure_url for a valid image buffer', async () => {
-    const service = new UploadService();
-    const url = await service.uploadImage({ buffer: Buffer.from('fake-image-bytes'), mimetype: 'image/png' } as any);
+    const service = new UploadService(mockPrisma);
+    const url = await service.uploadImage(
+      { buffer: Buffer.from('fake-image-bytes'), mimetype: 'image/png' } as any,
+      'user-id',
+    );
     expect(url).toBe('https://res.cloudinary.com/demo/image/upload/v1/test.jpg');
   });
 });

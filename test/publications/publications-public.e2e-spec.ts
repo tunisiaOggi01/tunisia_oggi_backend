@@ -4,6 +4,8 @@ import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { PrismaService } from '../../src/prisma/prisma.service';
+import { ApiResponseInterceptor } from '../../src/common/api-response.interceptor';
+import { AllExceptionsFilter } from '../../src/common/api-exception.filter';
 
 describe('Publications public (e2e)', () => {
   let app: INestApplication;
@@ -16,9 +18,12 @@ describe('Publications public (e2e)', () => {
     app = moduleRef.createNestApplication();
     app.use(cookieParser());
     app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+    app.useGlobalInterceptors(new ApiResponseInterceptor());
+    app.useGlobalFilters(new AllExceptionsFilter());
     await app.init();
     prisma = app.get(PrismaService);
 
+    await prisma.$executeRawUnsafe('TRUNCATE TABLE "RefreshToken" CASCADE');
     await prisma.$executeRawUnsafe('TRUNCATE TABLE "Publication" CASCADE');
     await prisma.$executeRawUnsafe('TRUNCATE TABLE "Category" CASCADE');
     await prisma.$executeRawUnsafe('TRUNCATE TABLE "User" CASCADE');
@@ -76,7 +81,7 @@ describe('Publications public (e2e)', () => {
 
   it('lists only PUBLISHED publications', async () => {
     const res = await request(app.getHttpServer()).get('/publications?status=PUBLISHED').expect(200);
-    const titles = res.body.data.map((p: any) => p.title);
+    const titles = res.body.data.data.map((p: any) => p.title);
     expect(titles).toContain('Published Article');
     expect(titles).not.toContain('Draft Article');
   });
@@ -87,15 +92,15 @@ describe('Publications public (e2e)', () => {
 
   it('returns a published article by slug and increments its view count', async () => {
     const first = await request(app.getHttpServer()).get(`/publications/${publishedSlug}`).expect(200);
-    expect(first.body.views).toBe(1);
+    expect(first.body.data.views).toBe(1);
 
     const second = await request(app.getHttpServer()).get(`/publications/${publishedSlug}`).expect(200);
-    expect(second.body.views).toBe(2);
+    expect(second.body.data.views).toBe(2);
   });
 
   it('returns related articles in the same category excluding itself', async () => {
     const res = await request(app.getHttpServer()).get(`/publications/${publishedSlug}/related`).expect(200);
-    expect(res.body.every((p: any) => p.id !== publishedId)).toBe(true);
-    expect(res.body.some((p: any) => p.title === 'Related Article')).toBe(true);
+    expect(res.body.data.every((p: any) => p.id !== publishedId)).toBe(true);
+    expect(res.body.data.some((p: any) => p.title === 'Related Article')).toBe(true);
   });
 });

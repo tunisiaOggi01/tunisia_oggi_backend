@@ -1,11 +1,14 @@
 import { Module } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
+import { PrismaModule } from '../prisma/prisma.module';
 import { AuthModule } from '../auth/auth.module';
-import { UploadService } from './upload.service';
-import { UploadController } from './upload.controller';
+import { UploadController } from './controllers/upload.controller';
+import { UploadService } from './services/upload.service';
+import { UploadCleanupService } from './services/upload-cleanup.service';
 
 @Module({
-  imports: [AuthModule],
+  imports: [ScheduleModule.forRoot(), PrismaModule, AuthModule],
   controllers: [UploadController],
-  providers: [UploadService],
+  providers: [UploadService, UploadCleanupService],
 })
 export class UploadModule {}

@@ -5,6 +5,8 @@ import request from 'supertest';
 import bcrypt from 'bcrypt';
 import { AppModule } from '../src/app.module';
 import { PrismaService } from '../src/prisma/prisma.service';
+import { ApiResponseInterceptor } from '../src/common/api-response.interceptor';
+import { AllExceptionsFilter } from '../src/common/api-exception.filter';
 
 describe('Auth (e2e)', () => {
   let app: INestApplication;
@@ -14,9 +16,12 @@ describe('Auth (e2e)', () => {
     const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
     app = moduleRef.createNestApplication();
     app.use(cookieParser());
+    app.useGlobalInterceptors(new ApiResponseInterceptor());
+    app.useGlobalFilters(new AllExceptionsFilter());
     await app.init();
     prisma = app.get(PrismaService);
 
+    await prisma.$executeRawUnsafe('TRUNCATE TABLE "RefreshToken" CASCADE');
     await prisma.$executeRawUnsafe('TRUNCATE TABLE "Publication" CASCADE');
     await prisma.$executeRawUnsafe('TRUNCATE TABLE "Category" CASCADE');
     await prisma.$executeRawUnsafe('TRUNCATE TABLE "User" CASCADE');
@@ -39,25 +44,32 @@ describe('Auth (e2e)', () => {
   });
 
   it('rejects a bad password', async () => {
-    await request(app.getHttpServer())
+    const res = await request(app.getHttpServer())
       .post('/auth/login')
       .send({ email: 'admin@tunisiaoggi.com', password: 'wrongpass' })
       .expect(401);
+    expect(res.body.success).toBe(false);
   });
 
-  it('logs in with correct credentials, sets a cookie, and returns a csrfToken', async () => {
+  it('logs in with correct credentials, sets cookies, and returns user + csrfToken', async () => {
     const res = await request(app.getHttpServer())
       .post('/auth/login')
       .send({ email: 'admin@tunisiaoggi.com', password: 'ChangeMe123!' })
       .expect(200);
 
-    expect(res.body.user.email).toBe('admin@tunisiaoggi.com');
-    expect(typeof res.body.csrfToken).toBe('string');
-    expect(res.headers['set-cookie'][0]).toMatch(/access_token=/);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.user.email).toBe('admin@tunisiaoggi.com');
+    expect(typeof res.body.data.csrfToken).toBe('string');
+    expect(res.body.latency).toBeGreaterThanOrEqual(0);
+
+    const cookies = res.headers['set-cookie'];
+    expect(cookies.some((c: string) => c.startsWith('access_token='))).toBe(true);
+    expect(cookies.some((c: string) => c.startsWith('refresh_token='))).toBe(true);
   });
 
   it('rejects /auth/me without a cookie', async () => {
-    await request(app.getHttpServer()).get('/auth/me').expect(401);
+    const res = await request(app.getHttpServer()).get('/auth/me').expect(401);
+    expect(res.body.success).toBe(false);
   });
 
   it('accepts /auth/me with the login cookie', async () => {
@@ -67,6 +79,27 @@ describe('Auth (e2e)', () => {
     const cookie = login.headers['set-cookie'][0];
 
     const me = await request(app.getHttpServer()).get('/auth/me').set('Cookie', cookie).expect(200);
-    expect(me.body.email).toBe('admin@tunisiaoggi.com');
+    expect(me.body.data.email).toBe('admin@tunisiaoggi.com');
+  });
+
+  it('rotates the refresh token at POST /auth/refresh', async () => {
+    const login = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({ email: 'admin@tunisiaoggi.com', password: 'ChangeMe123!' });
+    const cookies = login.headers['set-cookie'];
+
+    const refreshRes = await request(app.getHttpServer())
+      .post('/auth/refresh')
+      .set('Cookie', cookies)
+      .expect(200);
+
+    expect(refreshRes.body.success).toBe(true);
+    expect(typeof refreshRes.body.data.csrfToken).toBe('string');
+
+    const newCookies = refreshRes.headers['set-cookie'];
+    expect(newCookies.some((c: string) => c.startsWith('access_token='))).toBe(true);
+    expect(newCookies.some((c: string) => c.startsWith('refresh_token='))).toBe(true);
+    // Old refresh token should no longer work
+    await request(app.getHttpServer()).post('/auth/refresh').set('Cookie', cookies).expect(401);
   });
 });

@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { CategoriesModule } from './categories/categories.module';
 import { PublicationsModule } from './publications/publications.module';
 import { UploadModule } from './upload/upload.module';
+import { CommentsModule } from './comments/comments.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { UploadModule } from './upload/upload.module';
     CategoriesModule,
     PublicationsModule,
     UploadModule,
+    CommentsModule,
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
