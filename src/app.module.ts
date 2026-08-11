@@ -8,6 +8,7 @@ import { PublicationsModule } from './publications/publications.module';
 import { UploadModule } from './upload/upload.module';
 import { CommentsModule } from './comments/comments.module';
 import { ListingsModule } from './listings/listings.module';
+import { AdsModule } from './ads/ads.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { ListingsModule } from './listings/listings.module';
     UploadModule,
     CommentsModule,
     ListingsModule,
+    AdsModule,
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
