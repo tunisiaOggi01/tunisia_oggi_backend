@@ -11,6 +11,7 @@ import { ListingsModule } from './listings/listings.module';
 import { AdsModule } from './ads/ads.module';
 import { NewsletterModule } from './newsletter/newsletter.module';
 import { SearchModule } from './search/search.module';
+import { SeoModule } from './seo/seo.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { SearchModule } from './search/search.module';
     AdsModule,
     NewsletterModule,
     SearchModule,
+    SeoModule,
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
