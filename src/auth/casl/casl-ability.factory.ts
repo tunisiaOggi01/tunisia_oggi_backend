@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { Role } from '@prisma/client';
 
 type Actions = 'create' | 'read' | 'update' | 'delete' | 'manage';
-type Subjects = 'Publication' | 'Category' | 'User' | 'all';
+type Subjects = 'Publication' | 'Category' | 'User' | 'Listing' | 'all';
 export type AppAbility = Ability<[Actions, Subjects]>;
 
 /** Builds a CASL Ability instance per user role — no raw role string comparisons anywhere. */
