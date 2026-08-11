@@ -10,6 +10,7 @@ import { CommentsModule } from './comments/comments.module';
 import { ListingsModule } from './listings/listings.module';
 import { AdsModule } from './ads/ads.module';
 import { NewsletterModule } from './newsletter/newsletter.module';
+import { SearchModule } from './search/search.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { NewsletterModule } from './newsletter/newsletter.module';
     ListingsModule,
     AdsModule,
     NewsletterModule,
+    SearchModule,
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
