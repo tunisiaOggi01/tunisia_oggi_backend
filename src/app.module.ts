@@ -9,6 +9,7 @@ import { UploadModule } from './upload/upload.module';
 import { CommentsModule } from './comments/comments.module';
 import { ListingsModule } from './listings/listings.module';
 import { AdsModule } from './ads/ads.module';
+import { NewsletterModule } from './newsletter/newsletter.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { AdsModule } from './ads/ads.module';
     CommentsModule,
     ListingsModule,
     AdsModule,
+    NewsletterModule,
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

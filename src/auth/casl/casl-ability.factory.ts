@@ -4,7 +4,13 @@ import { Role } from '@prisma/client';
 
 type Actions = 'create' | 'read' | 'update' | 'delete' | 'manage';
 type Subjects =
-  'Publication' | 'Category' | 'User' | 'Listing' | 'Advertisement' | 'all';
+  | 'Publication'
+  | 'Category'
+  | 'User'
+  | 'Listing'
+  | 'Advertisement'
+  | 'Newsletter'
+  | 'all';
 export type AppAbility = Ability<[Actions, Subjects]>;
 
 /** Builds a CASL Ability instance per user role — no raw role string comparisons anywhere. */
