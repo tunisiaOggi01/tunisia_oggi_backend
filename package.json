@@ -78,6 +78,9 @@
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
   },
+  "overrides": {
+    "htmlparser2": "9.1.0"
+  },
   "jest": {
     "moduleFileExtensions": [
       "js",
