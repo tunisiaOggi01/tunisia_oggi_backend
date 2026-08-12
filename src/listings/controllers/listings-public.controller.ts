@@ -15,7 +15,7 @@ export class ListingsPublicController {
 
   @Get()
   async findApproved(@Query() query: QueryListingsDto) {
-    return { data: await this.listingsPublicService.findApproved(query) };
+    return this.listingsPublicService.findApproved(query);
   }
 
   @Get(':id')

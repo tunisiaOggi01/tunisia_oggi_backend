@@ -10,6 +10,6 @@ export class NewsletterPublicController {
   @Post('subscribe')
   @HttpCode(201)
   subscribe(@Body() dto: SubscribeNewsletterDto) {
-    return { data: this.newsletterPublicService.subscribe(dto) };
+    return this.newsletterPublicService.subscribe(dto);
   }
 }

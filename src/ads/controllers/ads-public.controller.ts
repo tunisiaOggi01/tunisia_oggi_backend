@@ -10,7 +10,7 @@ export class AdsPublicController {
 
   @Get()
   async findActive(@Query() query: QueryActiveAdsDto) {
-    return { data: await this.adsPublicService.findActive(query) };
+    return this.adsPublicService.findActive(query);
   }
 
   @Post(':id/impression')
