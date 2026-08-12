@@ -20,6 +20,27 @@ enum PublicationStatus {
   PUBLISHED
 }
 
+enum BusinessCategory {
+  RESTAURANT
+  LAW
+  REAL_ESTATE
+  HEALTH
+  SERVICES
+}
+
+enum ListingStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AdPlacement {
+  SIDEBAR
+  IN_ARTICLE
+  FOOTER
+  HOME_STRIP
+}
+
 model User {
   id               String   @id @default(uuid())
   email            String   @unique
@@ -39,6 +60,7 @@ model User {
   publicationViews  PublicationView[]
   reactions         PublicationReaction[]
   comments          Comment[]
+  businessListings  BusinessListing[]
 }
 
 model Category {
@@ -65,6 +87,7 @@ model Publication {
   likes            Int               @default(0)
   rankScore        Float             @default(0)
   tags             String[]          @default([])
+  searchText       String            @default("")
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
 
@@ -161,4 +184,55 @@ model Comment {
 
   @@index([publicationId, createdAt])
   @@index([parentId])
+}
+
+model BusinessListing {
+  id            String           @id @default(uuid())
+  businessName  String
+  category      BusinessCategory
+  description   String?
+  phone         String
+  email         String
+  website       String?
+  status        ListingStatus    @default(PENDING)
+  submittedAt   DateTime         @default(now())
+  reviewedAt    DateTime?
+  views         Int              @default(0)
+  phoneClicks   Int              @default(0)
+  emailClicks   Int              @default(0)
+  websiteClicks Int              @default(0)
+  searchText    String           @default("")
+  createdById   String
+  createdBy     User             @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@index([status, category])
+  @@index([createdById])
+}
+
+model Advertisement {
+  id              String      @id @default(uuid())
+  title           String
+  imageUrl        String
+  linkUrl         String
+  placement       AdPlacement
+  advertiserName  String?
+  advertiserEmail String?
+  startDate       DateTime
+  endDate         DateTime
+  impressions     Int         @default(0)
+  clicks          Int         @default(0)
+  createdAt       DateTime    @default(now())
+
+  @@index([placement, startDate])
+}
+
+model NewsletterSubscriber {
+  id               String    @id @default(uuid())
+  email            String    @unique
+  unsubscribeToken String    @unique
+  confirmedAt      DateTime?
+  subscribedAt     DateTime  @default(now())
+  deletedAt        DateTime?
+
+  @@index([subscribedAt])
 }
