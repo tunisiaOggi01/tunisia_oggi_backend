@@ -1,5 +1,6 @@
 import { PrismaClient, Role, PublicationStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { normalizeSearchText } from '../src/common/normalize-search';
 
 const prisma = new PrismaClient();
 
@@ -160,6 +161,7 @@ async function main() {
         featuredImageUrl: art.daysAgo === 0
       ? 'https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?auto=format&fit=crop&q=80&w=1200'
       : `https://picsum.photos/seed/${slug}/1200/800`,
+        searchText: normalizeSearchText(`${art.title} ${art.body}`),
         views: art.views,
         tags: art.tags,
         authorId: authors[art.daysAgo % authors.length].id,
