@@ -13,13 +13,19 @@ let AllExceptionsFilter = class AllExceptionsFilter {
         const ctx = host.switchToHttp();
         const response = ctx.getResponse();
         const start = Date.now();
-        const status = exception instanceof common_1.HttpException ? exception.getStatus() : common_1.HttpStatus.INTERNAL_SERVER_ERROR;
-        const message = exception instanceof common_1.HttpException ? exception.getResponse() : 'Internal server error';
+        const status = exception instanceof common_1.HttpException
+            ? exception.getStatus()
+            : common_1.HttpStatus.INTERNAL_SERVER_ERROR;
+        const message = exception instanceof common_1.HttpException
+            ? exception.getResponse()
+            : 'Internal server error';
         console.error(`[${new Date().toISOString()}] ${status} ${host.switchToHttp().getRequest().method} ${host.switchToHttp().getRequest().url}`);
         console.error(exception);
         response.status(status).json({
             success: false,
-            error: typeof message === 'string' ? message : message.message ?? 'Internal server error',
+            error: typeof message === 'string'
+                ? message
+                : (message.message ?? 'Internal server error'),
             latency: Date.now() - start,
             date: new Date().toISOString(),
         });

@@ -15,13 +15,20 @@ export class PublicationsInteractionService {
     });
     if (existing) return { viewed: false };
 
-    await this.prisma.publicationView.create({ data: { userId, publicationId: id } });
+    await this.prisma.publicationView.create({
+      data: { userId, publicationId: id },
+    });
 
-    const ageInHours = (Date.now() - new Date(pub.publishedAt ?? pub.createdAt).getTime()) / 3_600_000;
+    const ageInHours =
+      (Date.now() - new Date(pub.publishedAt ?? pub.createdAt).getTime()) /
+      3_600_000;
     const views = pub.views + 1;
     const rankScore = views / Math.pow(Math.max(ageInHours, 0) + 2, 1.5);
 
-    await this.prisma.publication.update({ where: { id }, data: { views, rankScore } });
+    await this.prisma.publication.update({
+      where: { id },
+      data: { views, rankScore },
+    });
     return { viewed: true, views, rankScore };
   }
 
@@ -34,15 +41,43 @@ export class PublicationsInteractionService {
     });
 
     if (existing) {
-      if (existing.type === type) return { reacted: false, type: existing.type };
-      await this.prisma.publicationReaction.update({ where: { id: existing.id }, data: { type } });
+      if (existing.type === type)
+        return { reacted: false, type: existing.type };
+      await this.prisma.publicationReaction.update({
+        where: { id: existing.id },
+        data: { type },
+      });
     } else {
-      await this.prisma.publicationReaction.create({ data: { userId, publicationId: id, type } });
-      await this.prisma.publication.update({ where: { id }, data: { likes: { increment: 1 } } });
+      await this.prisma.publicationReaction.create({
+        data: { userId, publicationId: id, type },
+      });
+      await this.prisma.publication.update({
+        where: { id },
+        data: { likes: { increment: 1 } },
+      });
     }
 
-    const count = await this.prisma.publicationReaction.count({ where: { publicationId: id } });
+    const count = await this.prisma.publicationReaction.count({
+      where: { publicationId: id },
+    });
     return { reacted: true, type, reactionCount: count };
+  }
+
+  async findMyReactions(userId: string) {
+    return this.prisma.publicationReaction.findMany({
+      where: { userId },
+      include: {
+        publication: {
+          include: {
+            category: {
+              select: { id: true, name: true, slug: true, color: true },
+            },
+            author: { select: { id: true, username: true, imageUrl: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
   async unreact(id: string, userId: string) {
@@ -51,10 +86,17 @@ export class PublicationsInteractionService {
     });
     if (!existing) return { unreacted: false };
 
-    await this.prisma.publicationReaction.delete({ where: { id: existing.id } });
-    await this.prisma.publication.update({ where: { id }, data: { likes: { decrement: 1 } } });
+    await this.prisma.publicationReaction.delete({
+      where: { id: existing.id },
+    });
+    await this.prisma.publication.update({
+      where: { id },
+      data: { likes: { decrement: 1 } },
+    });
 
-    const count = await this.prisma.publicationReaction.count({ where: { publicationId: id } });
+    const count = await this.prisma.publicationReaction.count({
+      where: { publicationId: id },
+    });
     return { unreacted: true, reactionCount: count };
   }
 }

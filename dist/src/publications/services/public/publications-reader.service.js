@@ -12,7 +12,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.PublicationsReaderService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../../prisma/prisma.service");
-const PUBLIC_INCLUDE = { category: true, author: { select: { id: true, username: true, imageUrl: true } } };
+const PUBLIC_INCLUDE = {
+    category: true,
+    author: { select: { id: true, username: true, imageUrl: true } },
+};
 let PublicationsReaderService = class PublicationsReaderService {
     prisma;
     constructor(prisma) {
@@ -24,12 +27,17 @@ let PublicationsReaderService = class PublicationsReaderService {
         const where = {
             status: 'PUBLISHED',
             ...(query.categorySlug ? { category: { slug: query.categorySlug } } : {}),
-            ...(query.search ? { title: { contains: query.search, mode: 'insensitive' } } : {}),
+            ...(query.search
+                ? { title: { contains: query.search, mode: 'insensitive' } }
+                : {}),
         };
         const [data, total] = await Promise.all([
             this.prisma.publication.findMany({
-                where, include: PUBLIC_INCLUDE, orderBy: { publishedAt: 'desc' },
-                skip: (page - 1) * pageSize, take: pageSize,
+                where,
+                include: PUBLIC_INCLUDE,
+                orderBy: { publishedAt: 'desc' },
+                skip: (page - 1) * pageSize,
+                take: pageSize,
             }),
             this.prisma.publication.count({ where }),
         ]);
@@ -46,21 +54,34 @@ let PublicationsReaderService = class PublicationsReaderService {
         return {
             ...rest,
             reactionCount: reactions.length,
-            userReaction: userId ? reactions.find((r) => r.userId === userId)?.type ?? null : null,
+            userReaction: userId
+                ? (reactions.find((r) => r.userId === userId)?.type ?? null)
+                : null,
         };
     }
     async findTrending(limit = 5) {
         return this.prisma.publication.findMany({
-            where: { status: 'PUBLISHED' }, include: PUBLIC_INCLUDE, orderBy: { rankScore: 'desc' }, take: limit,
+            where: { status: 'PUBLISHED' },
+            include: PUBLIC_INCLUDE,
+            orderBy: { rankScore: 'desc' },
+            take: limit,
         });
     }
     async findRelated(slug) {
-        const publication = await this.prisma.publication.findFirst({ where: { slug } });
+        const publication = await this.prisma.publication.findFirst({
+            where: { slug },
+        });
         if (!publication)
             throw new common_1.NotFoundException('Publication not found');
         return this.prisma.publication.findMany({
-            where: { status: 'PUBLISHED', categoryId: publication.categoryId, id: { not: publication.id } },
-            include: { category: true }, orderBy: { publishedAt: 'desc' }, take: 3,
+            where: {
+                status: 'PUBLISHED',
+                categoryId: publication.categoryId,
+                id: { not: publication.id },
+            },
+            include: { category: true },
+            orderBy: { publishedAt: 'desc' },
+            take: 3,
         });
     }
 };

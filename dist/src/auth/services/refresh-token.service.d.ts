@@ -5,6 +5,7 @@ export declare class RefreshTokenService {
     private jwtService;
     constructor(prisma: PrismaService, jwtService: JwtService);
     private hash;
+    private tokenRow;
     create(userId: string): Promise<string>;
     rotate(raw: string): Promise<{
         accessToken: string;

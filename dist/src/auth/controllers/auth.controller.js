@@ -20,6 +20,7 @@ const refresh_token_service_1 = require("../services/refresh-token.service");
 const auth_dto_1 = require("../dto/auth.dto");
 const password_reset_dto_1 = require("../dto/password-reset.dto");
 const jwt_auth_guard_1 = require("../guards/jwt-auth.guard");
+const csrf_guard_1 = require("../guards/csrf.guard");
 const refresh_throttle_guard_1 = require("../guards/refresh-throttle.guard");
 const current_user_decorator_1 = require("../decorators/current-user.decorator");
 let AuthController = class AuthController {
@@ -31,18 +32,28 @@ let AuthController = class AuthController {
     }
     setCookies(res, token, refreshToken) {
         const secure = process.env.NODE_ENV === 'production';
-        res.cookie('access_token', token, { httpOnly: true, secure, sameSite: secure ? 'none' : 'lax', maxAge: 15 * 60 * 1000 });
-        res.cookie('refresh_token', refreshToken, { httpOnly: true, secure, sameSite: secure ? 'none' : 'lax', path: '/auth/refresh', maxAge: 7 * 24 * 60 * 60 * 1000 });
+        res.cookie('access_token', token, {
+            httpOnly: true,
+            secure,
+            sameSite: secure ? 'none' : 'lax',
+            maxAge: 15 * 60 * 1000,
+        });
+        res.cookie('refresh_token', refreshToken, {
+            httpOnly: true,
+            secure,
+            sameSite: secure ? 'none' : 'lax',
+            path: '/auth/refresh',
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
     }
     async login(dto, res) {
         const result = await this.authService.validateAndLogin(dto.email, dto.password);
         this.setCookies(res, result.token, result.refreshToken);
         return { user: result.user, csrfToken: result.csrfToken };
     }
-    async register(dto, res) {
+    async register(dto) {
         const result = await this.authService.register(dto.email, dto.username, dto.password);
-        this.setCookies(res, result.token, result.refreshToken);
-        return { user: result.user, csrfToken: result.csrfToken };
+        return { user: result.user };
     }
     async updateProfile(user, dto) {
         return this.authService.updateProfile(user.id, dto);
@@ -64,7 +75,7 @@ let AuthController = class AuthController {
     async refresh(req, res) {
         const raw = req.cookies?.refresh_token;
         if (!raw)
-            return { success: false, error: 'No refresh token' };
+            throw new common_1.UnauthorizedException('No refresh token');
         const { accessToken, csrfToken, newRefreshToken } = await this.refreshTokenService.rotate(raw);
         this.setCookies(res, accessToken, newRefreshToken);
         return { csrfToken };
@@ -92,10 +103,10 @@ __decorate([
 __decorate([
     (0, common_1.Post)('register'),
     (0, common_1.HttpCode)(201),
+    (0, throttler_1.Throttle)({ default: { limit: 5, ttl: (0, throttler_1.minutes)(1) } }),
     __param(0, (0, common_1.Body)()),
-    __param(1, (0, common_1.Res)({ passthrough: true })),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [auth_dto_1.RegisterDto, Object]),
+    __metadata("design:paramtypes", [auth_dto_1.RegisterDto]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "register", null);
 __decorate([
@@ -110,7 +121,7 @@ __decorate([
 ], AuthController.prototype, "updateProfile", null);
 __decorate([
     (0, common_1.Patch)('heard-about'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, csrf_guard_1.CsrfGuard),
     (0, common_1.HttpCode)(200),
     __param(0, (0, current_user_decorator_1.CurrentUser)()),
     __param(1, (0, common_1.Body)()),
@@ -167,6 +178,7 @@ __decorate([
 ], AuthController.prototype, "logout", null);
 exports.AuthController = AuthController = __decorate([
     (0, common_1.Controller)('auth'),
-    __metadata("design:paramtypes", [auth_service_1.AuthService, refresh_token_service_1.RefreshTokenService])
+    __metadata("design:paramtypes", [auth_service_1.AuthService,
+        refresh_token_service_1.RefreshTokenService])
 ], AuthController);
 //# sourceMappingURL=auth.controller.js.map

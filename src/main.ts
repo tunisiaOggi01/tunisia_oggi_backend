@@ -15,8 +15,17 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.useGlobalInterceptors(new ApiResponseInterceptor(new Reflector()));
   app.useGlobalFilters(new AllExceptionsFilter());
-  app.enableCors({ origin: process.env.CORS_ORIGIN, credentials: true });
+  const corsOrigins = (process.env.CORS_ORIGIN ?? '')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+  app.enableCors({
+    // Dev: reflect any origin so localhost/127.0.0.1/LAN variants all work with
+    // credentials; production: strict allow-list from CORS_ORIGIN.
+    origin: process.env.NODE_ENV === 'production' ? corsOrigins : true,
+    credentials: true,
+  });
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 4000);
 }
 bootstrap();

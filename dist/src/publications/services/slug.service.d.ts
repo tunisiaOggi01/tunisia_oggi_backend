@@ -3,5 +3,5 @@ export declare class SlugService {
     private prisma;
     constructor(prisma: PrismaService);
     slugify(title: string): string;
-    uniqueSlug(title: string): Promise<string>;
+    uniqueSlug(title: string, currentId?: string): Promise<string>;
 }

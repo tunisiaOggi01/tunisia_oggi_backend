@@ -1,4 +1,5 @@
 import { Body, Controller, HttpCode, Post } from '@nestjs/common';
+import { Throttle, minutes } from '@nestjs/throttler';
 import { NewsletterPublicService } from '../services/newsletter-public.service';
 import { SubscribeNewsletterDto } from '../dto/newsletter.dto';
 
@@ -9,6 +10,7 @@ export class NewsletterPublicController {
 
   @Post('subscribe')
   @HttpCode(201)
+  @Throttle({ default: { limit: 5, ttl: minutes(1) } })
   subscribe(@Body() dto: SubscribeNewsletterDto) {
     return this.newsletterPublicService.subscribe(dto);
   }

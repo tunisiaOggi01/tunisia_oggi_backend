@@ -1,0 +1,63 @@
+import { ListingsPublicService } from '../services/public/listings-public.service';
+import { ListingsTrackingService } from '../services/public/listings-tracking.service';
+import { QueryListingsDto } from '../dto/query-listings.dto';
+import { ClickActionDto } from '../dto/tracking/click-action.dto';
+export declare class ListingsPublicController {
+    private listingsPublicService;
+    private listingsTrackingService;
+    constructor(listingsPublicService: ListingsPublicService, listingsTrackingService: ListingsTrackingService);
+    findApproved(query: QueryListingsDto): Promise<{
+        id: string;
+        email: string;
+        description: string | null;
+        category: import(".prisma/client").$Enums.BusinessCategory;
+        status: import(".prisma/client").$Enums.ListingStatus;
+        views: number;
+        searchText: string;
+        businessName: string;
+        phone: string;
+        website: string | null;
+        submittedAt: Date;
+        reviewedAt: Date | null;
+        phoneClicks: number;
+        emailClicks: number;
+        websiteClicks: number;
+        createdById: string;
+    }[]>;
+    findById(id: string, ip: string): Promise<{
+        id: string;
+        email: string;
+        description: string | null;
+        category: import(".prisma/client").$Enums.BusinessCategory;
+        status: import(".prisma/client").$Enums.ListingStatus;
+        views: number;
+        searchText: string;
+        businessName: string;
+        phone: string;
+        website: string | null;
+        submittedAt: Date;
+        reviewedAt: Date | null;
+        phoneClicks: number;
+        emailClicks: number;
+        websiteClicks: number;
+        createdById: string;
+    }>;
+    trackClick(id: string, dto: ClickActionDto): Promise<{
+        id: string;
+        email: string;
+        description: string | null;
+        category: import(".prisma/client").$Enums.BusinessCategory;
+        status: import(".prisma/client").$Enums.ListingStatus;
+        views: number;
+        searchText: string;
+        businessName: string;
+        phone: string;
+        website: string | null;
+        submittedAt: Date;
+        reviewedAt: Date | null;
+        phoneClicks: number;
+        emailClicks: number;
+        websiteClicks: number;
+        createdById: string;
+    }>;
+}

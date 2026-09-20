@@ -12,6 +12,7 @@ import { AdsModule } from './ads/ads.module';
 import { NewsletterModule } from './newsletter/newsletter.module';
 import { SearchModule } from './search/search.module';
 import { SeoModule } from './seo/seo.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { SeoModule } from './seo/seo.module';
     NewsletterModule,
     SearchModule,
     SeoModule,
+    UsersModule,
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
   ],
   providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],

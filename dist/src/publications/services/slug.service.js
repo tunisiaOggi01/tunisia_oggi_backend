@@ -18,18 +18,27 @@ let SlugService = class SlugService {
         this.prisma = prisma;
     }
     slugify(title) {
-        return title
+        const slug = title
             .toLowerCase()
             .trim()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
             .replace(/[^\w\s-]/g, '')
             .replace(/[\s_]+/g, '-')
             .replace(/^-+|-+$/g, '');
+        return slug || `article-${Date.now()}`;
     }
-    async uniqueSlug(title) {
+    async uniqueSlug(title, currentId) {
         const base = this.slugify(title);
         let slug = base;
         let suffix = 1;
-        while (await this.prisma.publication.findUnique({ where: { slug } })) {
+        while (true) {
+            const existing = await this.prisma.publication.findUnique({
+                where: { slug },
+            });
+            if (!existing || (currentId && existing.id === currentId)) {
+                break;
+            }
             slug = `${base}-${suffix}`;
             suffix += 1;
         }

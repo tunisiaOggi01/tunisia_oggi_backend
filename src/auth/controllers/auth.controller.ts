@@ -1,39 +1,80 @@
-import { Body, Controller, Get, HttpCode, Patch, Post, Res, UseGuards, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Patch,
+  Post,
+  Res,
+  UseGuards,
+  Req,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Throttle, minutes } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { AuthService } from '../services/auth.service';
 import { RefreshTokenService } from '../services/refresh-token.service';
-import { LoginDto, RegisterDto, UpdateProfileDto, HeardAboutDto } from '../dto/auth.dto';
+import {
+  LoginDto,
+  RegisterDto,
+  UpdateProfileDto,
+  HeardAboutDto,
+} from '../dto/auth.dto';
 import { ForgotPasswordDto, ResetPasswordDto } from '../dto/password-reset.dto';
 import { JwtAuthGuard } from '../guards/jwt-auth.guard';
+import { CsrfGuard } from '../guards/csrf.guard';
 import { RefreshThrottleGuard } from '../guards/refresh-throttle.guard';
 import { CurrentUser } from '../decorators/current-user.decorator';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService, private refreshTokenService: RefreshTokenService) {}
+  constructor(
+    private authService: AuthService,
+    private refreshTokenService: RefreshTokenService,
+  ) {}
 
   private setCookies(res: Response, token: string, refreshToken: string) {
     const secure = process.env.NODE_ENV === 'production';
-    res.cookie('access_token', token, { httpOnly: true, secure, sameSite: secure ? 'none' : 'lax', maxAge: 15 * 60 * 1000 });
-    res.cookie('refresh_token', refreshToken, { httpOnly: true, secure, sameSite: secure ? 'none' : 'lax', path: '/auth/refresh', maxAge: 7 * 24 * 60 * 60 * 1000 });
+    res.cookie('access_token', token, {
+      httpOnly: true,
+      secure,
+      sameSite: secure ? 'none' : 'lax',
+      maxAge: 15 * 60 * 1000,
+    });
+    res.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure,
+      sameSite: secure ? 'none' : 'lax',
+      path: '/auth/refresh',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
   }
 
   @Post('login')
   @HttpCode(200)
   @Throttle({ default: { limit: 10, ttl: minutes(1) } })
-  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
-    const result = await this.authService.validateAndLogin(dto.email, dto.password);
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const result = await this.authService.validateAndLogin(
+      dto.email,
+      dto.password,
+    );
     this.setCookies(res, result.token, result.refreshToken);
     return { user: result.user, csrfToken: result.csrfToken };
   }
 
   @Post('register')
   @HttpCode(201)
-  async register(@Body() dto: RegisterDto, @Res({ passthrough: true }) res: Response) {
-    const result = await this.authService.register(dto.email, dto.username, dto.password);
-    this.setCookies(res, result.token, result.refreshToken);
-    return { user: result.user, csrfToken: result.csrfToken };
+  @Throttle({ default: { limit: 5, ttl: minutes(1) } })
+  async register(@Body() dto: RegisterDto) {
+    const result = await this.authService.register(
+      dto.email,
+      dto.username,
+      dto.password,
+    );
+    return { user: result.user };
   }
 
   @Patch('profile')
@@ -44,7 +85,7 @@ export class AuthController {
   }
 
   @Patch('heard-about')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, CsrfGuard)
   @HttpCode(200)
   async updateHeardAbout(@CurrentUser() user: any, @Body() dto: HeardAboutDto) {
     return this.authService.updateHeardAbout(user.id, dto.source);
@@ -69,17 +110,25 @@ export class AuthController {
   @HttpCode(200)
   @Throttle({ default: { limit: 5, ttl: minutes(1) } })
   async resetPassword(@Body() dto: ResetPasswordDto) {
-    await this.authService.resetPassword(dto.email, dto.otpCode, dto.newPassword);
+    await this.authService.resetPassword(
+      dto.email,
+      dto.otpCode,
+      dto.newPassword,
+    );
     return { message: 'Password has been reset successfully.' };
   }
 
   @Post('refresh')
   @UseGuards(RefreshThrottleGuard)
   @HttpCode(200)
-  async refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+  async refresh(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const raw = req.cookies?.refresh_token;
-    if (!raw) return { success: false, error: 'No refresh token' };
-    const { accessToken, csrfToken, newRefreshToken } = await this.refreshTokenService.rotate(raw);
+    if (!raw) throw new UnauthorizedException('No refresh token');
+    const { accessToken, csrfToken, newRefreshToken } =
+      await this.refreshTokenService.rotate(raw);
     this.setCookies(res, accessToken, newRefreshToken);
     return { csrfToken };
   }

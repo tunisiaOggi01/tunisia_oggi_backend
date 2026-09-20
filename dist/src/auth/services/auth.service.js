@@ -32,32 +32,50 @@ let AuthService = class AuthService {
         this.otpService = otpService;
     }
     mapUser(user) {
-        return { id: user.id, email: user.email, username: user.username, role: user.role, imageUrl: user.imageUrl, description: user.description, profileCompleted: user.profileCompleted, heardAbout: user.heardAbout };
+        return {
+            id: user.id,
+            email: user.email,
+            username: user.username,
+            role: user.role,
+            imageUrl: user.imageUrl,
+            description: user.description,
+            profileCompleted: user.profileCompleted,
+            heardAbout: user.heardAbout,
+        };
     }
     async validateAndLogin(email, password) {
         const user = await this.prisma.user.findUnique({ where: { email } });
         if (!user?.passwordHash)
             throw new common_1.UnauthorizedException('Invalid credentials');
-        if (!await bcrypt_1.default.compare(password, user.passwordHash))
+        if (!(await bcrypt_1.default.compare(password, user.passwordHash)))
             throw new common_1.UnauthorizedException('Invalid credentials');
         const tokens = await this.issueTokens(user.id, user);
         return { ...tokens, user: this.mapUser(user) };
     }
     async register(email, username, password) {
-        const existing = await this.prisma.user.findFirst({ where: { OR: [{ email }, { username }] } });
+        const existing = await this.prisma.user.findFirst({
+            where: { OR: [{ email }, { username }] },
+        });
         if (existing)
             throw new common_1.ConflictException('Email or username already in use');
         const passwordHash = await bcrypt_1.default.hash(password, 10);
-        const user = await this.prisma.user.create({ data: { email, username, passwordHash, role: 'EDITOR' } });
-        const tokens = await this.issueTokens(user.id, user);
-        return { ...tokens, user: this.mapUser(user) };
+        const user = await this.prisma.user.create({
+            data: { email, username, passwordHash, role: 'VISITOR' },
+        });
+        return { user: this.mapUser(user) };
     }
     async updateProfile(userId, data) {
-        const user = await this.prisma.user.update({ where: { id: userId }, data: { ...data, profileCompleted: true } });
+        const user = await this.prisma.user.update({
+            where: { id: userId },
+            data: { ...data, profileCompleted: true },
+        });
         return this.mapUser(user);
     }
     async updateHeardAbout(userId, source) {
-        const user = await this.prisma.user.update({ where: { id: userId }, data: { heardAbout: source } });
+        const user = await this.prisma.user.update({
+            where: { id: userId },
+            data: { heardAbout: source },
+        });
         return this.mapUser(user);
     }
     async getProfile(userId) {
@@ -76,22 +94,82 @@ let AuthService = class AuthService {
     async resetPassword(email, otpCode, newPassword) {
         await this.otpService.verify(email, otpCode);
         const passwordHash = await bcrypt_1.default.hash(newPassword, 10);
-        await this.prisma.user.update({ where: { email }, data: { passwordHash } });
+        const user = await this.prisma.user.update({
+            where: { email },
+            data: { passwordHash },
+        });
+        await this.refreshTokenService.revokeAll(user.id);
     }
     async handleGoogleLogin(profile) {
-        const existing = await this.prisma.user.findFirst({ where: { OR: [{ googleId: profile.googleId }, { email: profile.email }] } });
+        const existing = await this.prisma.user.findFirst({
+            where: { OR: [{ googleId: profile.googleId }, { email: profile.email }] },
+        });
         if (existing) {
             if (!existing.googleId)
-                await this.prisma.user.update({ where: { id: existing.id }, data: { googleId: profile.googleId } });
+                await this.prisma.user.update({
+                    where: { id: existing.id },
+                    data: { googleId: profile.googleId },
+                });
             return existing;
         }
-        return this.prisma.user.create({ data: { email: profile.email, username: profile.username, googleId: profile.googleId, imageUrl: profile.imageUrl, role: 'EDITOR' } });
+        return this.prisma.user.create({
+            data: {
+                email: profile.email,
+                username: profile.username,
+                googleId: profile.googleId,
+                imageUrl: profile.imageUrl,
+                role: 'VISITOR',
+            },
+        });
     }
     async issueTokens(userId, user) {
         const csrf = (0, crypto_1.randomBytes)(32).toString('hex');
-        const token = this.jwtService.sign({ sub: userId, email: user.email, username: user.username, role: user.role, csrf });
+        const token = this.jwtService.sign({
+            sub: userId,
+            email: user.email,
+            username: user.username,
+            role: user.role,
+            csrf,
+        });
         const refreshToken = await this.refreshTokenService.create(userId);
         return { token, csrfToken: csrf, refreshToken };
+    }
+    async changeUsername(userId, username) {
+        const existing = await this.prisma.user.findFirst({
+            where: { username, NOT: { id: userId } },
+        });
+        if (existing)
+            throw new common_1.ConflictException('Username already taken');
+        const user = await this.prisma.user.update({
+            where: { id: userId },
+            data: { username },
+        });
+        return this.mapUser(user);
+    }
+    async changeEmail(userId, email) {
+        const existing = await this.prisma.user.findFirst({
+            where: { email, NOT: { id: userId } },
+        });
+        if (existing)
+            throw new common_1.ConflictException('Email already in use');
+        const user = await this.prisma.user.update({
+            where: { id: userId },
+            data: { email },
+        });
+        return this.mapUser(user);
+    }
+    async changePassword(userId, currentPassword, newPassword) {
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user?.passwordHash)
+            throw new common_1.UnauthorizedException('User not found');
+        if (!(await bcrypt_1.default.compare(currentPassword, user.passwordHash)))
+            throw new common_1.UnauthorizedException('Current password is incorrect');
+        const passwordHash = await bcrypt_1.default.hash(newPassword, 10);
+        await this.prisma.user.update({
+            where: { id: userId },
+            data: { passwordHash },
+        });
+        await this.refreshTokenService.revokeAll(userId);
     }
 };
 exports.AuthService = AuthService;

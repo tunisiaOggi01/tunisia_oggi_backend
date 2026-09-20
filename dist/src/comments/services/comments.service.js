@@ -13,7 +13,9 @@ exports.CommentsService = void 0;
 const common_1 = require("@nestjs/common");
 const client_1 = require("@prisma/client");
 const prisma_service_1 = require("../../prisma/prisma.service");
-const COMMENT_INCLUDE = { user: { select: { id: true, username: true, imageUrl: true } } };
+const COMMENT_INCLUDE = {
+    user: { select: { id: true, username: true, imageUrl: true } },
+};
 let CommentsService = class CommentsService {
     prisma;
     constructor(prisma) {
@@ -22,17 +24,24 @@ let CommentsService = class CommentsService {
     async findByPublication(publicationId) {
         const comments = await this.prisma.comment.findMany({
             where: { publicationId, parentId: null },
-            include: { ...COMMENT_INCLUDE, replies: { include: COMMENT_INCLUDE, orderBy: { createdAt: 'asc' } } },
+            include: {
+                ...COMMENT_INCLUDE,
+                replies: { include: COMMENT_INCLUDE, orderBy: { createdAt: 'asc' } },
+            },
             orderBy: { createdAt: 'desc' },
         });
         return comments;
     }
     async create(body, publicationId, userId, parentId) {
-        const pub = await this.prisma.publication.findUnique({ where: { id: publicationId } });
+        const pub = await this.prisma.publication.findUnique({
+            where: { id: publicationId },
+        });
         if (!pub)
             throw new common_1.NotFoundException('Publication not found');
         if (parentId) {
-            const parent = await this.prisma.comment.findUnique({ where: { id: parentId } });
+            const parent = await this.prisma.comment.findUnique({
+                where: { id: parentId },
+            });
             if (!parent || parent.publicationId !== publicationId)
                 throw new common_1.NotFoundException('Parent comment not found');
         }
@@ -47,7 +56,11 @@ let CommentsService = class CommentsService {
             throw new common_1.NotFoundException('Comment not found');
         if (role !== client_1.Role.SUPER_ADMIN && comment.userId !== userId)
             throw new common_1.ForbiddenException('Cannot edit others comments');
-        return this.prisma.comment.update({ where: { id }, data: { body: dto.body }, include: COMMENT_INCLUDE });
+        return this.prisma.comment.update({
+            where: { id },
+            data: { body: dto.body },
+            include: COMMENT_INCLUDE,
+        });
     }
     async remove(id, userId, role) {
         const comment = await this.prisma.comment.findUnique({ where: { id } });
@@ -55,7 +68,9 @@ let CommentsService = class CommentsService {
             throw new common_1.NotFoundException('Comment not found');
         if (role !== client_1.Role.SUPER_ADMIN && comment.userId !== userId)
             throw new common_1.ForbiddenException('Cannot delete others comments');
-        await this.prisma.comment.deleteMany({ where: { OR: [{ id }, { parentId: id }] } });
+        await this.prisma.comment.deleteMany({
+            where: { OR: [{ id }, { parentId: id }] },
+        });
     }
 };
 exports.CommentsService = CommentsService;

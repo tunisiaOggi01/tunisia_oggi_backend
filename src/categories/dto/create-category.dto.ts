@@ -1,4 +1,10 @@
-import { IsHexColor, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
+import {
+  IsHexColor,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+} from 'class-validator';
 
 /** Request body for POST /categories. */
 export class CreateCategoryDto {

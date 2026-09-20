@@ -23,7 +23,13 @@ exports.PublicationsModule = PublicationsModule = __decorate([
     (0, common_1.Module)({
         imports: [auth_module_1.AuthModule],
         controllers: [publications_admin_controller_1.PublicationsAdminController, publications_public_controller_1.PublicationsPublicController],
-        providers: [publications_admin_service_1.PublicationsAdminService, publications_reader_service_1.PublicationsReaderService, publications_interaction_service_1.PublicationsInteractionService, slug_service_1.SlugService, html_sanitizer_service_1.HtmlSanitizerService],
+        providers: [
+            publications_admin_service_1.PublicationsAdminService,
+            publications_reader_service_1.PublicationsReaderService,
+            publications_interaction_service_1.PublicationsInteractionService,
+            slug_service_1.SlugService,
+            html_sanitizer_service_1.HtmlSanitizerService,
+        ],
     })
 ], PublicationsModule);
 //# sourceMappingURL=publications.module.js.map

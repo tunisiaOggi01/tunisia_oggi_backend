@@ -11,6 +11,12 @@ import { PublicationsPublicController } from './controllers/publications-public.
 @Module({
   imports: [AuthModule],
   controllers: [PublicationsAdminController, PublicationsPublicController],
-  providers: [PublicationsAdminService, PublicationsReaderService, PublicationsInteractionService, SlugService, HtmlSanitizerService],
+  providers: [
+    PublicationsAdminService,
+    PublicationsReaderService,
+    PublicationsInteractionService,
+    SlugService,
+    HtmlSanitizerService,
+  ],
 })
 export class PublicationsModule {}

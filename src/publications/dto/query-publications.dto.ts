@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional, IsString, IsInt, Min } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsInt, Max, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PublicationStatus } from '@prisma/client';
 
@@ -30,5 +30,6 @@ export class QueryPublicationsDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
+  @Max(100)
   pageSize?: number = 10;
 }

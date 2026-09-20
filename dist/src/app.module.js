@@ -16,6 +16,12 @@ const categories_module_1 = require("./categories/categories.module");
 const publications_module_1 = require("./publications/publications.module");
 const upload_module_1 = require("./upload/upload.module");
 const comments_module_1 = require("./comments/comments.module");
+const listings_module_1 = require("./listings/listings.module");
+const ads_module_1 = require("./ads/ads.module");
+const newsletter_module_1 = require("./newsletter/newsletter.module");
+const search_module_1 = require("./search/search.module");
+const seo_module_1 = require("./seo/seo.module");
+const users_module_1 = require("./users/users.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -28,6 +34,12 @@ exports.AppModule = AppModule = __decorate([
             publications_module_1.PublicationsModule,
             upload_module_1.UploadModule,
             comments_module_1.CommentsModule,
+            listings_module_1.ListingsModule,
+            ads_module_1.AdsModule,
+            newsletter_module_1.NewsletterModule,
+            search_module_1.SearchModule,
+            seo_module_1.SeoModule,
+            users_module_1.UsersModule,
             throttler_1.ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
         ],
         providers: [{ provide: core_1.APP_GUARD, useClass: throttler_1.ThrottlerGuard }],

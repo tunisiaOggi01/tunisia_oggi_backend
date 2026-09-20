@@ -21,6 +21,12 @@ export class PublicationsAdminService {
     private sanitizer: HtmlSanitizerService,
   ) {}
 
+  /**
+   * Creates a new publication with sanitized title and body and unique slug.
+   * @param dto - Publication creation data
+   * @param authorId - ID of the user authoring the publication
+   * @returns Created publication entity
+   */
   async create(dto: CreatePublicationDto, authorId: string) {
     const slug = await this.slugService.uniqueSlug(dto.title);
     const publishedAt = dto.status === 'PUBLISHED' ? new Date() : null;
@@ -53,7 +59,7 @@ export class PublicationsAdminService {
     return publication;
   }
 
-  async findById(id: string) {
+  async findById(id: string, userId: string, userRole: Role) {
     const publication = await this.prisma.publication.findUnique({
       where: { id },
       include: {
@@ -62,9 +68,19 @@ export class PublicationsAdminService {
       },
     });
     if (!publication) throw new NotFoundException('Publication not found');
+    if (userRole !== Role.SUPER_ADMIN && publication.authorId !== userId)
+      throw new ForbiddenException('You can only read your own publications');
     return publication;
   }
 
+  /**
+   * Updates an existing publication, regenerating the slug when title is updated.
+   * @param id - ID of the publication to update
+   * @param dto - Partial publication fields to update
+   * @param userId - ID of the requesting user
+   * @param userRole - Role of the requesting user
+   * @returns Updated publication entity
+   */
   async update(
     id: string,
     dto: UpdatePublicationDto,
@@ -81,11 +97,15 @@ export class PublicationsAdminService {
     if (dto.status === 'PUBLISHED') data.publishedAt = new Date();
     if (typeof data.body === 'string')
       data.body = this.sanitizer.sanitize(data.body);
-    if (typeof data.title === 'string')
-      data.title = this.sanitizer.sanitize(data.title);
-    if (typeof data.title === 'string' && typeof data.body === 'string') {
-      data.searchText = normalizeSearchText(`${data.title} ${data.body}`);
+    if (typeof data.title === 'string' && data.title.trim()) {
+      const cleanTitle = this.sanitizer.sanitize(data.title);
+      data.title = cleanTitle;
+      data.slug = await this.slugService.uniqueSlug(cleanTitle, id);
     }
+    const currentTitle =
+      typeof data.title === 'string' ? data.title : pub.title;
+    const currentBody = typeof data.body === 'string' ? data.body : pub.body;
+    data.searchText = normalizeSearchText(`${currentTitle} ${currentBody}`);
     return this.prisma.publication.update({ where: { id }, data });
   }
 
@@ -97,7 +117,14 @@ export class PublicationsAdminService {
     await this.prisma.publication.delete({ where: { id } });
   }
 
-  async findAll(query: QueryPublicationsDto) {
+  async findAll(query: QueryPublicationsDto, userId: string, userRole: Role) {
+    if (userRole === Role.SUPER_ADMIN)
+      return this.findAllWhere(query, query.authorId);
+    if (userRole === Role.EDITOR) return this.findAllWhere(query, userId);
+    throw new ForbiddenException('Insufficient permissions');
+  }
+
+  private async findAllWhere(query: QueryPublicationsDto, authorId?: string) {
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 10;
     const where = {
@@ -105,7 +132,11 @@ export class PublicationsAdminService {
       ...(query.search
         ? { title: { contains: query.search, mode: 'insensitive' as const } }
         : {}),
-      ...(query.authorId ? { authorId: query.authorId } : {}),
+      ...(authorId !== undefined
+        ? { authorId }
+        : query.authorId
+          ? { authorId: query.authorId }
+          : {}),
     };
 
     const [data, total] = await Promise.all([
@@ -125,7 +156,9 @@ export class PublicationsAdminService {
     return { data, total, page, pageSize };
   }
 
-  async stats() {
+  async stats(userRole: Role) {
+    if (userRole !== Role.SUPER_ADMIN)
+      throw new ForbiddenException('Insufficient permissions');
     const [totalArticles, activeDrafts, viewsAgg] = await Promise.all([
       this.prisma.publication.count(),
       this.prisma.publication.count({ where: { status: 'DRAFT' } }),

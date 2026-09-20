@@ -1,35 +1,63 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { QueryActiveAdsDto } from '../dto/ads.dto';
+import { pickWeighted } from './rotation';
 
 /** Repository-pattern service for public ad serving and impression/click tracking. */
 @Injectable()
 export class AdsPublicService {
   constructor(private prisma: PrismaService) {}
 
-  findActive(query: QueryActiveAdsDto) {
+  async findActive(query: QueryActiveAdsDto) {
     const now = new Date();
-    return this.prisma.advertisement.findMany({
+    const active = await this.prisma.advertisement.findMany({
       where: {
         placement: query.placement,
         startDate: { lte: now },
         endDate: { gte: now },
       },
-      orderBy: { startDate: 'desc' },
-      take: query.limit ?? 1,
     });
+    const picked = pickWeighted(active, query.limit ?? 1);
+    return picked.sort((a, b) => b.startDate.getTime() - a.startDate.getTime());
   }
 
-  async trackImpression(id: string) {
+  async trackImpression(id: string, ip: string) {
     const ad = await this.findActiveById(id);
+    try {
+      await this.prisma.adImpression.create({
+        data: { ip, advertisementId: ad.id },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        return ad;
+      }
+      throw error;
+    }
     return this.prisma.advertisement.update({
       where: { id: ad.id },
       data: { impressions: { increment: 1 } },
     });
   }
 
-  async trackClick(id: string) {
+  async trackClick(id: string, ip: string) {
     const ad = await this.findActiveById(id);
+    try {
+      await this.prisma.adClick.create({
+        data: { ip, advertisementId: ad.id },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        return ad;
+      }
+      throw error;
+    }
     return this.prisma.advertisement.update({
       where: { id: ad.id },
       data: { clicks: { increment: 1 } },

@@ -1,4 +1,10 @@
-import { Injectable, CanActivate, ExecutionContext, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 
 interface Entry {
   count: number;
@@ -28,7 +34,10 @@ export class RefreshThrottleGuard implements CanActivate {
     }
     entry.count++;
     if (entry.count > MAX_ATTEMPTS) {
-      throw new HttpException('Too many refresh attempts — try again later', HttpStatus.TOO_MANY_REQUESTS);
+      throw new HttpException(
+        'Too many refresh attempts — try again later',
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
     }
     return true;
   }

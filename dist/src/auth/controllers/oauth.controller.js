@@ -33,10 +33,23 @@ let OAuthController = OAuthController_1 = class OAuthController {
             }
             const { token, csrfToken, refreshToken } = await this.authService.issueTokens(user.id, user);
             const secure = process.env.NODE_ENV === 'production';
-            res.cookie('access_token', token, { httpOnly: true, secure, sameSite: secure ? 'none' : 'lax', maxAge: 15 * 60 * 1000 });
-            res.cookie('refresh_token', refreshToken, { httpOnly: true, secure, sameSite: secure ? 'none' : 'lax', path: '/auth/refresh', maxAge: 7 * 24 * 60 * 60 * 1000 });
+            res.cookie('access_token', token, {
+                httpOnly: true,
+                secure,
+                sameSite: secure ? 'none' : 'lax',
+                maxAge: 15 * 60 * 1000,
+            });
+            res.cookie('refresh_token', refreshToken, {
+                httpOnly: true,
+                secure,
+                sameSite: secure ? 'none' : 'lax',
+                path: '/auth/refresh',
+                maxAge: 7 * 24 * 60 * 60 * 1000,
+            });
             const frontendUrl = process.env.CORS_ORIGIN ?? 'http://localhost:5173';
-            const redirectPath = redirect ? `?redirect=${encodeURIComponent(redirect)}&csrf=${csrfToken}` : `?csrf=${csrfToken}`;
+            const redirectPath = redirect
+                ? `?redirect=${encodeURIComponent(redirect)}&csrf=${csrfToken}`
+                : `?csrf=${csrfToken}`;
             res.redirect(`${frontendUrl}/admin${redirectPath}`);
         }
         catch (err) {

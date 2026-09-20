@@ -24,7 +24,12 @@ let JwtAuthGuard = class JwtAuthGuard {
             throw new common_1.UnauthorizedException('No session cookie');
         try {
             const payload = this.jwtService.verify(token);
-            request.user = { id: payload.sub, email: payload.email, username: payload.username, role: payload.role };
+            request.user = {
+                id: payload.sub,
+                email: payload.email,
+                username: payload.username,
+                role: payload.role,
+            };
             request.csrfClaim = payload.csrf;
             return true;
         }

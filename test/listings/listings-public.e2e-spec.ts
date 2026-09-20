@@ -1,5 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import bcrypt from 'bcrypt';
@@ -12,6 +13,7 @@ describe('Listings public (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let cookie: string;
+  let csrf: string;
 
   const submitPayload = {
     businessName: 'Trattoria Roma',
@@ -29,12 +31,13 @@ describe('Listings public (e2e)', () => {
     app.useGlobalPipes(
       new ValidationPipe({ whitelist: true, transform: true }),
     );
-    app.useGlobalInterceptors(new ApiResponseInterceptor());
+    app.useGlobalInterceptors(new ApiResponseInterceptor(new Reflector()));
     app.useGlobalFilters(new AllExceptionsFilter());
     await app.init();
     prisma = app.get(PrismaService);
 
     await prisma.$executeRawUnsafe('TRUNCATE TABLE "RefreshToken" CASCADE');
+    await prisma.$executeRawUnsafe('TRUNCATE TABLE "ListingView" CASCADE');
     await prisma.$executeRawUnsafe('TRUNCATE TABLE "BusinessListing" CASCADE');
     await prisma.$executeRawUnsafe('TRUNCATE TABLE "User" CASCADE');
 
@@ -53,6 +56,36 @@ describe('Listings public (e2e)', () => {
       .post('/auth/login')
       .send({ email: 'admin@tunisiaoggi.com', password: 'ChangeMe123!' });
     cookie = login.headers['set-cookie'][0];
+    csrf = login.body.data.csrfToken;
+  });
+
+  it('counts a view once per visitor IP, not per page hit', async () => {
+    const admin = await prisma.user.findUnique({
+      where: { email: 'admin@tunisiaoggi.com' },
+    });
+    const fresh = await prisma.businessListing.create({
+      data: {
+        businessName: 'Ristorante Dedup Test',
+        category: 'RESTAURANT',
+        phone: '+216 11 111 111',
+        email: 'dedup@test.it',
+        status: 'APPROVED',
+        createdById: admin!.id,
+      },
+    });
+
+    const first = await request(app.getHttpServer())
+      .get(`/public/listings/${fresh.id}`)
+      .expect(200);
+    expect(first.body.data.views).toBe(1);
+
+    await request(app.getHttpServer())
+      .get(`/public/listings/${fresh.id}`)
+      .expect(200);
+    const third = await request(app.getHttpServer())
+      .get(`/public/listings/${fresh.id}`)
+      .expect(200);
+    expect(third.body.data.views).toBe(1);
   });
 
   afterAll(async () => {
@@ -71,6 +104,7 @@ describe('Listings public (e2e)', () => {
     const submit = await request(app.getHttpServer())
       .post('/listings')
       .set('Cookie', cookie)
+      .set('X-CSRF-Token', csrf)
       .send(submitPayload)
       .expect(201);
 
@@ -88,6 +122,7 @@ describe('Listings public (e2e)', () => {
     await request(app.getHttpServer())
       .post('/listings')
       .set('Cookie', cookie)
+      .set('X-CSRF-Token', csrf)
       .send({
         businessName: 'Trattoria Roma',
         category: 'RESTAURANT',
@@ -101,7 +136,9 @@ describe('Listings public (e2e)', () => {
     const browse = await request(app.getHttpServer())
       .get('/public/listings')
       .expect(200);
-    expect(browse.body.data.some((l: any) => l.businessName === 'Trattoria Roma')).toBe(false);
+    expect(
+      browse.body.data.some((l: any) => l.businessName === 'Trattoria Roma'),
+    ).toBe(false);
   });
 
   it('shows an APPROVED listing in public browse, filterable by category', async () => {
@@ -122,12 +159,18 @@ describe('Listings public (e2e)', () => {
     const all = await request(app.getHttpServer())
       .get('/public/listings')
       .expect(200);
-    expect(all.body.data.some((l: any) => l.businessName === 'Studio Legale Milano')).toBe(true);
+    expect(
+      all.body.data.some((l: any) => l.businessName === 'Studio Legale Milano'),
+    ).toBe(true);
 
     const filtered = await request(app.getHttpServer())
       .get('/public/listings?category=RESTAURANT')
       .expect(200);
-    expect(filtered.body.data.some((l: any) => l.businessName === 'Studio Legale Milano')).toBe(false);
+    expect(
+      filtered.body.data.some(
+        (l: any) => l.businessName === 'Studio Legale Milano',
+      ),
+    ).toBe(false);
   });
 
   it('returns an APPROVED listing by id and 404s for PENDING or unknown ids', async () => {

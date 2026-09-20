@@ -32,6 +32,9 @@ let PublicationsPublicController = class PublicationsPublicController {
     findTrending() {
         return this.reader.findTrending();
     }
+    findMyReactions(user) {
+        return this.interaction.findMyReactions(user.id);
+    }
     findBySlug(slug) {
         return this.reader.findBySlug(slug);
     }
@@ -62,6 +65,14 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], PublicationsPublicController.prototype, "findTrending", null);
+__decorate([
+    (0, common_1.Get)('me/reactions'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], PublicationsPublicController.prototype, "findMyReactions", null);
 __decorate([
     (0, common_1.Get)(':slug'),
     __param(0, (0, common_1.Param)('slug')),

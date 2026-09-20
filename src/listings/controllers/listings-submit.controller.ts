@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { CsrfGuard } from '../../auth/guards/csrf.guard';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 import { ListingsPublicService } from '../services/public/listings-public.service';
 import { ListingsTrackingService } from '../services/public/listings-tracking.service';
@@ -18,7 +19,7 @@ export class ListingsSubmitController {
   ) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, CsrfGuard)
   submit(@Body() dto: CreateListingDto, @CurrentUser() user: RequestUser) {
     return this.listingsPublicService.submit(dto, user.id);
   }

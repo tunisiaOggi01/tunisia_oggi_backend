@@ -1,0 +1,7 @@
+-- Absorbs Prisma's no-op comment FK diff so migrations match the datamodel exactly (mirrors replay ordering).
+
+-- DropForeignKey
+ALTER TABLE "Comment" DROP CONSTRAINT "Comment_parentId_fkey";
+
+-- AddForeignKey
+ALTER TABLE "Comment" ADD CONSTRAINT "Comment_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "Comment"("id") ON DELETE SET NULL ON UPDATE CASCADE;

@@ -21,7 +21,7 @@ export declare class AuthController {
         };
         csrfToken: string;
     }>;
-    register(dto: RegisterDto, res: Response): Promise<{
+    register(dto: RegisterDto): Promise<{
         user: {
             id: any;
             email: any;
@@ -32,7 +32,6 @@ export declare class AuthController {
             profileCompleted: any;
             heardAbout: any;
         };
-        csrfToken: string;
     }>;
     updateProfile(user: any, dto: UpdateProfileDto): Promise<{
         id: any;
@@ -74,13 +73,7 @@ export declare class AuthController {
         message: string;
     }>;
     refresh(req: Request, res: Response): Promise<{
-        success: boolean;
-        error: string;
-        csrfToken?: undefined;
-    } | {
         csrfToken: string;
-        success?: undefined;
-        error?: undefined;
     }>;
     logout(req: Request, res: Response): Promise<{
         success: boolean;

@@ -28,7 +28,9 @@ let UploadCleanupService = UploadCleanupService_1 = class UploadCleanupService {
     }
     async cleanupStaleUploads() {
         const cutoff = new Date(Date.now() - 30 * 60 * 1000);
-        const stale = await this.prisma.pendingUpload.findMany({ where: { createdAt: { lt: cutoff } } });
+        const stale = await this.prisma.pendingUpload.findMany({
+            where: { createdAt: { lt: cutoff } },
+        });
         for (const upload of stale) {
             try {
                 await cloudinary_1.v2.uploader.destroy(upload.publicId);

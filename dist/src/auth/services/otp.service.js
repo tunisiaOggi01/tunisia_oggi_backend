@@ -28,12 +28,21 @@ let OtpService = class OtpService {
     }
     async verify(email, code) {
         const otp = await this.prisma.otpCode.findFirst({
-            where: { email, code, type: 'PASSWORD_RESET', isUsed: false, expiresAt: { gte: new Date() } },
+            where: {
+                email,
+                code,
+                type: 'PASSWORD_RESET',
+                isUsed: false,
+                expiresAt: { gte: new Date() },
+            },
             orderBy: { createdAt: 'desc' },
         });
         if (!otp)
             throw new common_1.BadRequestException('Invalid or expired OTP code');
-        await this.prisma.otpCode.update({ where: { id: otp.id }, data: { isUsed: true } });
+        await this.prisma.otpCode.update({
+            where: { id: otp.id },
+            data: { isUsed: true },
+        });
     }
 };
 exports.OtpService = OtpService;

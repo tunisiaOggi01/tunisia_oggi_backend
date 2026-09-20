@@ -1,4 +1,15 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CaslGuard } from '../../auth/casl/casl.guard';
 import { CsrfGuard } from '../../auth/guards/csrf.guard';
@@ -25,16 +36,26 @@ export class PublicationsAdminController {
     return this.publicationsAdminService.create(dto, user.id);
   }
 
+  @Get('stats')
+  @RequireAbility('read', 'Publication')
+  stats(@CurrentUser() user: any) {
+    return this.publicationsAdminService.stats(user.role);
+  }
+
   @Get(':id')
   @RequireAbility('read', 'Publication')
-  findById(@Param('id') id: string) {
-    return this.publicationsAdminService.findById(id);
+  findById(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.publicationsAdminService.findById(id, user.id, user.role);
   }
 
   @Patch(':id')
   @UseGuards(CsrfGuard)
   @RequireAbility('update', 'Publication')
-  update(@Param('id') id: string, @Body() dto: UpdatePublicationDto, @CurrentUser() user: any) {
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdatePublicationDto,
+    @CurrentUser() user: any,
+  ) {
     return this.publicationsAdminService.update(id, dto, user.id, user.role);
   }
 
@@ -48,13 +69,7 @@ export class PublicationsAdminController {
 
   @Get()
   @RequireAbility('read', 'Publication')
-  findAll(@Query() query: QueryPublicationsDto) {
-    return this.publicationsAdminService.findAll(query);
-  }
-
-  @Get('stats')
-  @RequireAbility('read', 'Publication')
-  stats() {
-    return this.publicationsAdminService.stats();
+  findAll(@Query() query: QueryPublicationsDto, @CurrentUser() user: any) {
+    return this.publicationsAdminService.findAll(query, user.id, user.role);
   }
 }

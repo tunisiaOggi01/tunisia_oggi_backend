@@ -6,6 +6,7 @@ import { RefreshTokenService } from './services/refresh-token.service';
 import { OtpService } from './services/otp.service';
 import { AuthController } from './controllers/auth.controller';
 import { OAuthController } from './controllers/oauth.controller';
+import { SettingsController } from './controllers/settings.controller';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CsrfGuard } from './guards/csrf.guard';
@@ -21,8 +22,17 @@ import { CaslGuard } from './casl/casl.guard';
       signOptions: { expiresIn: (process.env.JWT_EXPIRES_IN ?? '15m') as any },
     }),
   ],
-  controllers: [AuthController, OAuthController],
-  providers: [AuthService, RefreshTokenService, OtpService, GoogleStrategy, JwtAuthGuard, CsrfGuard, CaslAbilityFactory, CaslGuard],
+  controllers: [AuthController, OAuthController, SettingsController],
+  providers: [
+    AuthService,
+    RefreshTokenService,
+    OtpService,
+    GoogleStrategy,
+    JwtAuthGuard,
+    CsrfGuard,
+    CaslAbilityFactory,
+    CaslGuard,
+  ],
   exports: [JwtAuthGuard, CsrfGuard, CaslGuard, CaslAbilityFactory, JwtModule],
 })
 export class AuthModule {}

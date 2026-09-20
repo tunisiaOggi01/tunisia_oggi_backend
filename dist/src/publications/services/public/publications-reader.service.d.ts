@@ -32,6 +32,7 @@ export declare class PublicationsReaderService {
             likes: number;
             rankScore: number;
             tags: string[];
+            searchText: string;
             updatedAt: Date;
             authorId: string;
             categoryId: string;
@@ -69,6 +70,7 @@ export declare class PublicationsReaderService {
         likes: number;
         rankScore: number;
         tags: string[];
+        searchText: string;
         updatedAt: Date;
         authorId: string;
         categoryId: string;
@@ -101,6 +103,7 @@ export declare class PublicationsReaderService {
         likes: number;
         rankScore: number;
         tags: string[];
+        searchText: string;
         updatedAt: Date;
         authorId: string;
         categoryId: string;
@@ -128,6 +131,7 @@ export declare class PublicationsReaderService {
         likes: number;
         rankScore: number;
         tags: string[];
+        searchText: string;
         updatedAt: Date;
         authorId: string;
         categoryId: string;

@@ -31,8 +31,11 @@ let PublicationsAdminController = class PublicationsAdminController {
     create(dto, user) {
         return this.publicationsAdminService.create(dto, user.id);
     }
-    findById(id) {
-        return this.publicationsAdminService.findById(id);
+    stats(user) {
+        return this.publicationsAdminService.stats(user.role);
+    }
+    findById(id, user) {
+        return this.publicationsAdminService.findById(id, user.id, user.role);
     }
     update(id, dto, user) {
         return this.publicationsAdminService.update(id, dto, user.id, user.role);
@@ -40,11 +43,8 @@ let PublicationsAdminController = class PublicationsAdminController {
     remove(id, user) {
         return this.publicationsAdminService.remove(id, user.id, user.role);
     }
-    findAll(query) {
-        return this.publicationsAdminService.findAll(query);
-    }
-    stats() {
-        return this.publicationsAdminService.stats();
+    findAll(query, user) {
+        return this.publicationsAdminService.findAll(query, user.id, user.role);
     }
 };
 exports.PublicationsAdminController = PublicationsAdminController;
@@ -59,11 +59,20 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], PublicationsAdminController.prototype, "create", null);
 __decorate([
+    (0, common_1.Get)('stats'),
+    (0, require_ability_decorator_1.RequireAbility)('read', 'Publication'),
+    __param(0, (0, current_user_decorator_1.CurrentUser)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], PublicationsAdminController.prototype, "stats", null);
+__decorate([
     (0, common_1.Get)(':id'),
     (0, require_ability_decorator_1.RequireAbility)('read', 'Publication'),
     __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
 ], PublicationsAdminController.prototype, "findById", null);
 __decorate([
@@ -92,17 +101,11 @@ __decorate([
     (0, common_1.Get)(),
     (0, require_ability_decorator_1.RequireAbility)('read', 'Publication'),
     __param(0, (0, common_1.Query)()),
+    __param(1, (0, current_user_decorator_1.CurrentUser)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [query_publications_dto_1.QueryPublicationsDto]),
+    __metadata("design:paramtypes", [query_publications_dto_1.QueryPublicationsDto, Object]),
     __metadata("design:returntype", void 0)
 ], PublicationsAdminController.prototype, "findAll", null);
-__decorate([
-    (0, common_1.Get)('stats'),
-    (0, require_ability_decorator_1.RequireAbility)('read', 'Publication'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], PublicationsAdminController.prototype, "stats", null);
 exports.PublicationsAdminController = PublicationsAdminController = __decorate([
     (0, common_1.Controller)('admin/publications'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, casl_guard_1.CaslGuard),

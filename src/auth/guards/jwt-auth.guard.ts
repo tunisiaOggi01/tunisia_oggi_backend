@@ -1,4 +1,9 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
 /** Verifies the access_token cookie and attaches the decoded user + csrf claim to the request. */
@@ -13,7 +18,12 @@ export class JwtAuthGuard implements CanActivate {
 
     try {
       const payload = this.jwtService.verify(token);
-      request.user = { id: payload.sub, email: payload.email, username: payload.username, role: payload.role };
+      request.user = {
+        id: payload.sub,
+        email: payload.email,
+        username: payload.username,
+        role: payload.role,
+      };
       request.csrfClaim = payload.csrf;
       return true;
     } catch {

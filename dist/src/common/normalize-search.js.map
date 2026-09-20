@@ -1,0 +1,1 @@
+{"version":3,"file":"normalize-search.js","sourceRoot":"","sources":["../../../src/common/normalize-search.ts"],"names":[],"mappings":";;AAIA,kDAMC;AAND,SAAgB,mBAAmB,CAAC,KAAa;IAC/C,OAAO,KAAK;SACT,SAAS,CAAC,KAAK,CAAC;SAChB,OAAO,CAAC,kBAAkB,EAAE,EAAE,CAAC;SAC/B,WAAW,EAAE;SACb,IAAI,EAAE,CAAC;AACZ,CAAC"}

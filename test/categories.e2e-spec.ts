@@ -1,5 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import bcrypt from 'bcrypt';
@@ -15,11 +16,15 @@ describe('Categories (e2e)', () => {
   let csrfToken: string;
 
   beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
+    const moduleRef = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
     app = moduleRef.createNestApplication();
     app.use(cookieParser());
-    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-    app.useGlobalInterceptors(new ApiResponseInterceptor());
+    app.useGlobalPipes(
+      new ValidationPipe({ whitelist: true, transform: true }),
+    );
+    app.useGlobalInterceptors(new ApiResponseInterceptor(new Reflector()));
     app.useGlobalFilters(new AllExceptionsFilter());
     await app.init();
     prisma = app.get(PrismaService);
@@ -57,7 +62,10 @@ describe('Categories (e2e)', () => {
   });
 
   it('rejects category creation without auth', async () => {
-    await request(app.getHttpServer()).post('/categories').send({ name: 'Sport', slug: 'sport' }).expect(401);
+    await request(app.getHttpServer())
+      .post('/categories')
+      .send({ name: 'Sport', slug: 'sport' })
+      .expect(401);
   });
 
   it('rejects category creation without a valid CSRF token', async () => {

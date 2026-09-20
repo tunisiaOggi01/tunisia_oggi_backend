@@ -16,9 +16,7 @@ exports.UploadController = void 0;
 const common_1 = require("@nestjs/common");
 const platform_express_1 = require("@nestjs/platform-express");
 const jwt_auth_guard_1 = require("../../auth/guards/jwt-auth.guard");
-const casl_guard_1 = require("../../auth/casl/casl.guard");
 const csrf_guard_1 = require("../../auth/guards/csrf.guard");
-const require_ability_decorator_1 = require("../../auth/decorators/require-ability.decorator");
 const current_user_decorator_1 = require("../../auth/decorators/current-user.decorator");
 const upload_service_1 = require("../services/upload.service");
 let UploadController = class UploadController {
@@ -34,8 +32,7 @@ let UploadController = class UploadController {
 exports.UploadController = UploadController;
 __decorate([
     (0, common_1.Post)('image'),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, csrf_guard_1.CsrfGuard, casl_guard_1.CaslGuard),
-    (0, require_ability_decorator_1.RequireAbility)('create', 'Publication'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, csrf_guard_1.CsrfGuard),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', { limits: { fileSize: 5 * 1024 * 1024 } })),
     __param(0, (0, common_1.UploadedFile)()),
     __param(1, (0, current_user_decorator_1.CurrentUser)()),

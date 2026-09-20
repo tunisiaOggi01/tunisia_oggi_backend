@@ -1,4 +1,15 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { Throttle, minutes } from '@nestjs/throttler';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { CsrfGuard } from '../../auth/guards/csrf.guard';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
@@ -18,13 +29,22 @@ export class CommentsController {
   @Post('publications/:id/comments')
   @UseGuards(JwtAuthGuard, CsrfGuard)
   @HttpCode(201)
-  create(@Param('id') id: string, @Body() dto: CreateCommentDto, @CurrentUser() user: any) {
+  @Throttle({ default: { limit: 10, ttl: minutes(1) } })
+  create(
+    @Param('id') id: string,
+    @Body() dto: CreateCommentDto,
+    @CurrentUser() user: any,
+  ) {
     return this.commentsService.create(dto.body, id, user.id, dto.parentId);
   }
 
   @Patch('comments/:id')
   @UseGuards(JwtAuthGuard, CsrfGuard)
-  update(@Param('id') id: string, @Body() dto: UpdateCommentDto, @CurrentUser() user: any) {
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateCommentDto,
+    @CurrentUser() user: any,
+  ) {
     return this.commentsService.update(id, dto, user.id, user.role);
   }
 

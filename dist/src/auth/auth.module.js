@@ -15,6 +15,7 @@ const refresh_token_service_1 = require("./services/refresh-token.service");
 const otp_service_1 = require("./services/otp.service");
 const auth_controller_1 = require("./controllers/auth.controller");
 const oauth_controller_1 = require("./controllers/oauth.controller");
+const settings_controller_1 = require("./controllers/settings.controller");
 const google_strategy_1 = require("./strategies/google.strategy");
 const jwt_auth_guard_1 = require("./guards/jwt-auth.guard");
 const csrf_guard_1 = require("./guards/csrf.guard");
@@ -32,8 +33,17 @@ exports.AuthModule = AuthModule = __decorate([
                 signOptions: { expiresIn: (process.env.JWT_EXPIRES_IN ?? '15m') },
             }),
         ],
-        controllers: [auth_controller_1.AuthController, oauth_controller_1.OAuthController],
-        providers: [auth_service_1.AuthService, refresh_token_service_1.RefreshTokenService, otp_service_1.OtpService, google_strategy_1.GoogleStrategy, jwt_auth_guard_1.JwtAuthGuard, csrf_guard_1.CsrfGuard, casl_ability_factory_1.CaslAbilityFactory, casl_guard_1.CaslGuard],
+        controllers: [auth_controller_1.AuthController, oauth_controller_1.OAuthController, settings_controller_1.SettingsController],
+        providers: [
+            auth_service_1.AuthService,
+            refresh_token_service_1.RefreshTokenService,
+            otp_service_1.OtpService,
+            google_strategy_1.GoogleStrategy,
+            jwt_auth_guard_1.JwtAuthGuard,
+            csrf_guard_1.CsrfGuard,
+            casl_ability_factory_1.CaslAbilityFactory,
+            casl_guard_1.CaslGuard,
+        ],
         exports: [jwt_auth_guard_1.JwtAuthGuard, csrf_guard_1.CsrfGuard, casl_guard_1.CaslGuard, casl_ability_factory_1.CaslAbilityFactory, jwt_1.JwtModule],
     })
 ], AuthModule);

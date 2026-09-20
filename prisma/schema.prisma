@@ -141,6 +141,16 @@ model PublicationView {
   @@index([publicationId])
 }
 
+model ListingView {
+  id        String   @id @default(uuid())
+  ip        String
+  listingId String
+  createdAt DateTime @default(now())
+
+  @@unique([ip, listingId])
+  @@index([listingId])
+}
+
 model PublicationReaction {
   id            String   @id @default(uuid())
   userId        String
@@ -221,9 +231,44 @@ model Advertisement {
   endDate         DateTime
   impressions     Int         @default(0)
   clicks          Int         @default(0)
+  maxImpressions  Int?
   createdAt       DateTime    @default(now())
 
   @@index([placement, startDate])
+}
+
+model AdImpression {
+  id              String   @id @default(uuid())
+  ip              String
+  advertisementId String
+  createdAt       DateTime @default(now())
+
+  @@unique([ip, advertisementId])
+  @@index([advertisementId])
+}
+
+model AdClick {
+  id              String   @id @default(uuid())
+  ip              String
+  advertisementId String
+  createdAt       DateTime @default(now())
+
+  @@unique([ip, advertisementId])
+  @@index([advertisementId])
+}
+
+model AdLog {
+  id              String   @id @default(uuid())
+  adminName       String
+  adminEmail      String
+  action          String
+  adTitle         String
+  advertisementId String?
+  changes         Json?
+  createdAt       DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([advertisementId])
 }
 
 model NewsletterSubscriber {

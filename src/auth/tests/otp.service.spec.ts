@@ -5,11 +5,19 @@ function makePrisma() {
   const store: any[] = [];
   return {
     otpCode: {
-      create: jest.fn((d: any) => { const r = { id: String(store.length + 1), ...d.data }; store.push(r); return Promise.resolve(r); }),
+      create: jest.fn((d: any) => {
+        const r = { id: String(store.length + 1), ...d.data };
+        store.push(r);
+        return Promise.resolve(r);
+      }),
       findFirst: jest.fn((q: any) => {
-        const match = store.find((o) =>
-          o.email === q.where.email && o.code === q.where.code && o.type === q.where.type
-          && !o.isUsed && new Date(o.expiresAt) >= new Date(),
+        const match = store.find(
+          (o) =>
+            o.email === q.where.email &&
+            o.code === q.where.code &&
+            o.type === q.where.type &&
+            !o.isUsed &&
+            new Date(o.expiresAt) >= new Date(),
         );
         return Promise.resolve(match ?? null);
       }),
@@ -38,21 +46,29 @@ describe('OtpService', () => {
 
   it('verifies a valid OTP code', async () => {
     const code = await service.generate('verify@example.com');
-    await expect(service.verify('verify@example.com', code)).resolves.toBeUndefined();
+    await expect(
+      service.verify('verify@example.com', code),
+    ).resolves.toBeUndefined();
   });
 
   it('rejects an invalid OTP code', async () => {
     await service.generate('wrong@example.com');
-    await expect(service.verify('wrong@example.com', '000000')).rejects.toThrow(BadRequestException);
+    await expect(service.verify('wrong@example.com', '000000')).rejects.toThrow(
+      BadRequestException,
+    );
   });
 
   it('rejects verification for a non-existent email', async () => {
-    await expect(service.verify('nonexist@example.com', '123456')).rejects.toThrow(BadRequestException);
+    await expect(
+      service.verify('nonexist@example.com', '123456'),
+    ).rejects.toThrow(BadRequestException);
   });
 
   it('marks a code as used after successful verification', async () => {
     const code = await service.generate('used@example.com');
     await service.verify('used@example.com', code);
-    await expect(service.verify('used@example.com', code)).rejects.toThrow(BadRequestException);
+    await expect(service.verify('used@example.com', code)).rejects.toThrow(
+      BadRequestException,
+    );
   });
 });

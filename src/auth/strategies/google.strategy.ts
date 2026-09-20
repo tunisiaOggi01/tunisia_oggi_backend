@@ -14,17 +14,25 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     const callbackURL = process.env.GOOGLE_CALLBACK_URL ?? '';
 
     if (!clientID || !clientSecret || !callbackURL) {
-      Logger.warn(`Google OAuth misconfigured: GOOGLE_CLIENT_ID=${!!clientID} GOOGLE_CLIENT_SECRET=${!!clientSecret} GOOGLE_CALLBACK_URL=${!!callbackURL}`);
+      Logger.warn(
+        `Google OAuth misconfigured: GOOGLE_CLIENT_ID=${!!clientID} GOOGLE_CLIENT_SECRET=${!!clientSecret} GOOGLE_CALLBACK_URL=${!!callbackURL}`,
+      );
     }
 
     super({ clientID, clientSecret, callbackURL, scope: ['email', 'profile'] });
   }
 
-  async validate(accessToken: string, refreshToken: string, profile: any, done: VerifyCallback) {
+  async validate(
+    accessToken: string,
+    refreshToken: string,
+    profile: any,
+    done: VerifyCallback,
+  ) {
     try {
       const { id, emails, photos } = profile;
       const email = emails?.[0]?.value;
-      if (!email) return done(new Error('Google account has no email'), undefined);
+      if (!email)
+        return done(new Error('Google account has no email'), undefined);
 
       const user = await this.authService.handleGoogleLogin({
         googleId: id,
@@ -35,7 +43,10 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
 
       done(null, user);
     } catch (err) {
-      this.logger.error('validate error', err instanceof Error ? err.message : err);
+      this.logger.error(
+        'validate error',
+        err instanceof Error ? err.message : err,
+      );
       done(err as Error, undefined);
     }
   }

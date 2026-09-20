@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Ip, Param, Post, Query } from '@nestjs/common';
 import { Throttle, minutes } from '@nestjs/throttler';
 import { ListingsPublicService } from '../services/public/listings-public.service';
 import { ListingsTrackingService } from '../services/public/listings-tracking.service';
@@ -19,8 +19,8 @@ export class ListingsPublicController {
   }
 
   @Get(':id')
-  findById(@Param('id') id: string) {
-    return this.listingsTrackingService.findById(id);
+  findById(@Param('id') id: string, @Ip() ip: string) {
+    return this.listingsTrackingService.findById(id, ip);
   }
 
   @Post(':id/click')

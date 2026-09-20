@@ -1,5 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
 import request from 'supertest';
 import bcrypt from 'bcrypt';
@@ -16,11 +17,15 @@ describe('Publications admin (e2e)', () => {
   let categoryId: string;
 
   beforeAll(async () => {
-    const moduleRef = await Test.createTestingModule({ imports: [AppModule] }).compile();
+    const moduleRef = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
     app = moduleRef.createNestApplication();
     app.use(cookieParser());
-    app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-    app.useGlobalInterceptors(new ApiResponseInterceptor());
+    app.useGlobalPipes(
+      new ValidationPipe({ whitelist: true, transform: true }),
+    );
+    app.useGlobalInterceptors(new ApiResponseInterceptor(new Reflector()));
     app.useGlobalFilters(new AllExceptionsFilter());
     await app.init();
     prisma = app.get(PrismaService);
@@ -62,7 +67,12 @@ describe('Publications admin (e2e)', () => {
       .post('/admin/publications')
       .set('Cookie', cookie)
       .set('X-CSRF-Token', csrfToken)
-      .send({ title: 'Economic Outlook 2025', categoryId, body: 'Full body text', status: 'DRAFT' })
+      .send({
+        title: 'Economic Outlook 2025',
+        categoryId,
+        body: 'Full body text',
+        status: 'DRAFT',
+      })
       .expect(201);
 
     expect(create.body.data.slug).toBe('economic-outlook-2025');
@@ -74,7 +84,9 @@ describe('Publications admin (e2e)', () => {
       .set('X-CSRF-Token', csrfToken)
       .expect(200);
 
-    expect(list.body.data.data.some((p: any) => p.id === create.body.data.id)).toBe(true);
+    expect(
+      list.body.data.data.some((p: any) => p.id === create.body.data.id),
+    ).toBe(true);
   });
 
   it('publishes a draft via PATCH and stamps publishedAt', async () => {
@@ -82,7 +94,12 @@ describe('Publications admin (e2e)', () => {
       .post('/admin/publications')
       .set('Cookie', cookie)
       .set('X-CSRF-Token', csrfToken)
-      .send({ title: 'Breaking News Today', categoryId, body: 'body', status: 'DRAFT' });
+      .send({
+        title: 'Breaking News Today',
+        categoryId,
+        body: 'body',
+        status: 'DRAFT',
+      });
 
     const update = await request(app.getHttpServer())
       .patch(`/admin/publications/${create.body.data.id}`)
@@ -111,7 +128,12 @@ describe('Publications admin (e2e)', () => {
       .post('/admin/publications')
       .set('Cookie', cookie)
       .set('X-CSRF-Token', csrfToken)
-      .send({ title: 'To Be Deleted', categoryId, body: 'body', status: 'DRAFT' });
+      .send({
+        title: 'To Be Deleted',
+        categoryId,
+        body: 'body',
+        status: 'DRAFT',
+      });
 
     await request(app.getHttpServer())
       .delete(`/admin/publications/${create.body.data.id}`)

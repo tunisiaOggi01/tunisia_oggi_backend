@@ -8,7 +8,16 @@ export declare class AuthService {
     private refreshTokenService;
     private otpService;
     constructor(prisma: PrismaService, jwtService: JwtService, refreshTokenService: RefreshTokenService, otpService: OtpService);
-    private mapUser;
+    mapUser(user: any): {
+        id: any;
+        email: any;
+        username: any;
+        role: any;
+        imageUrl: any;
+        description: any;
+        profileCompleted: any;
+        heardAbout: any;
+    };
     validateAndLogin(email: string, password: string): Promise<{
         user: {
             id: any;
@@ -35,9 +44,6 @@ export declare class AuthService {
             profileCompleted: any;
             heardAbout: any;
         };
-        token: string;
-        csrfToken: string;
-        refreshToken: string;
     }>;
     updateProfile(userId: string, data: {
         imageUrl?: string;
@@ -103,4 +109,25 @@ export declare class AuthService {
         csrfToken: string;
         refreshToken: string;
     }>;
+    changeUsername(userId: string, username: string): Promise<{
+        id: any;
+        email: any;
+        username: any;
+        role: any;
+        imageUrl: any;
+        description: any;
+        profileCompleted: any;
+        heardAbout: any;
+    }>;
+    changeEmail(userId: string, email: string): Promise<{
+        id: any;
+        email: any;
+        username: any;
+        role: any;
+        imageUrl: any;
+        description: any;
+        profileCompleted: any;
+        heardAbout: any;
+    }>;
+    changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void>;
 }

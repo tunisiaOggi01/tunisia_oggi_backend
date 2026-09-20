@@ -24,11 +24,12 @@ export declare class PublicationsAdminService {
         likes: number;
         rankScore: number;
         tags: string[];
+        searchText: string;
         updatedAt: Date;
         authorId: string;
         categoryId: string;
     }>;
-    findById(id: string): Promise<{
+    findById(id: string, userId: string, userRole: Role): Promise<{
         category: {
             id: string;
             description: string | null;
@@ -55,6 +56,7 @@ export declare class PublicationsAdminService {
         likes: number;
         rankScore: number;
         tags: string[];
+        searchText: string;
         updatedAt: Date;
         authorId: string;
         categoryId: string;
@@ -73,12 +75,13 @@ export declare class PublicationsAdminService {
         likes: number;
         rankScore: number;
         tags: string[];
+        searchText: string;
         updatedAt: Date;
         authorId: string;
         categoryId: string;
     }>;
     remove(id: string, userId: string, userRole: Role): Promise<void>;
-    findAll(query: QueryPublicationsDto): Promise<{
+    findAll(query: QueryPublicationsDto, userId: string, userRole: Role): Promise<{
         data: ({
             category: {
                 id: string;
@@ -106,6 +109,7 @@ export declare class PublicationsAdminService {
             likes: number;
             rankScore: number;
             tags: string[];
+            searchText: string;
             updatedAt: Date;
             authorId: string;
             categoryId: string;
@@ -114,7 +118,8 @@ export declare class PublicationsAdminService {
         page: number;
         pageSize: number;
     }>;
-    stats(): Promise<{
+    private findAllWhere;
+    stats(userRole: Role): Promise<{
         totalArticles: number;
         activeDrafts: number;
         totalViews: number;

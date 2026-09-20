@@ -19,13 +19,17 @@ export class UploadCleanupService {
   @Cron(CronExpression.EVERY_5_MINUTES)
   async cleanupStaleUploads() {
     const cutoff = new Date(Date.now() - 30 * 60 * 1000);
-    const stale = await this.prisma.pendingUpload.findMany({ where: { createdAt: { lt: cutoff } } });
+    const stale = await this.prisma.pendingUpload.findMany({
+      where: { createdAt: { lt: cutoff } },
+    });
 
     for (const upload of stale) {
       try {
         await cloudinary.uploader.destroy(upload.publicId);
       } catch {
-        this.logger.warn(`Failed to delete Cloudinary asset: ${upload.publicId}`);
+        this.logger.warn(
+          `Failed to delete Cloudinary asset: ${upload.publicId}`,
+        );
       }
     }
 

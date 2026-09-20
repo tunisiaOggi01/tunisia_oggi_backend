@@ -35,6 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 const client_1 = require("@prisma/client");
 const bcrypt = __importStar(require("bcrypt"));
+const normalize_search_1 = require("../src/common/normalize-search");
 const prisma = new client_1.PrismaClient();
 function slugify(text) {
     return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -184,6 +185,7 @@ async function main() {
                 featuredImageUrl: art.daysAgo === 0
                     ? 'https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?auto=format&fit=crop&q=80&w=1200'
                     : `https://picsum.photos/seed/${slug}/1200/800`,
+                searchText: (0, normalize_search_1.normalizeSearchText)(`${art.title} ${art.body}`),
                 views: art.views,
                 tags: art.tags,
                 authorId: authors[art.daysAgo % authors.length].id,

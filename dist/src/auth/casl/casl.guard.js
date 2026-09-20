@@ -22,10 +22,7 @@ let CaslGuard = class CaslGuard {
         this.caslAbilityFactory = caslAbilityFactory;
     }
     canActivate(context) {
-        const required = this.reflector.getAllAndOverride(require_ability_decorator_1.REQUIRE_ABILITY_KEY, [
-            context.getHandler(),
-            context.getClass(),
-        ]);
+        const required = this.reflector.getAllAndOverride(require_ability_decorator_1.REQUIRE_ABILITY_KEY, [context.getHandler(), context.getClass()]);
         if (!required || required.length === 0)
             return true;
         const { user } = context.switchToHttp().getRequest();
@@ -42,6 +39,7 @@ let CaslGuard = class CaslGuard {
 exports.CaslGuard = CaslGuard;
 exports.CaslGuard = CaslGuard = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [core_1.Reflector, casl_ability_factory_1.CaslAbilityFactory])
+    __metadata("design:paramtypes", [core_1.Reflector,
+        casl_ability_factory_1.CaslAbilityFactory])
 ], CaslGuard);
 //# sourceMappingURL=casl.guard.js.map

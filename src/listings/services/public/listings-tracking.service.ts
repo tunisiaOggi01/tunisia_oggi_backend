@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { ListingAction } from '../../dto/tracking/click-action.dto';
 
@@ -17,11 +18,26 @@ const CLICK_COUNTERS: Record<ListingAction, string> = {
 export class ListingsTrackingService {
   constructor(private prisma: PrismaService) {}
 
-  async findById(id: string) {
+  async findById(id: string, ip: string) {
     const listing = await this.prisma.businessListing.findFirst({
       where: { id, status: 'APPROVED' },
     });
     if (!listing) throw new NotFoundException('Listing not found');
+
+    try {
+      await this.prisma.listingView.create({
+        data: { ip, listingId: id },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        return listing;
+      }
+      throw error;
+    }
+
     return this.prisma.businessListing.update({
       where: { id },
       data: { views: { increment: 1 } },
