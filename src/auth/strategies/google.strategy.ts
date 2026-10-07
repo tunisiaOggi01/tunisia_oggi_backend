@@ -19,7 +19,14 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
       );
     }
 
-    super({ clientID, clientSecret, callbackURL, scope: ['email', 'profile'] });
+    // passport-oauth2 throws on an empty clientID, which would crash the whole app at boot;
+    // a placeholder keeps the API up and only Google login fails until the env vars are set.
+    super({
+      clientID: clientID || 'not-configured',
+      clientSecret: clientSecret || 'not-configured',
+      callbackURL: callbackURL || '/auth/google/callback',
+      scope: ['email', 'profile'],
+    });
   }
 
   async validate(

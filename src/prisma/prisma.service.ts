@@ -7,6 +7,13 @@ export class PrismaService
   extends PrismaClient
   implements OnModuleInit, OnModuleDestroy
 {
+  constructor() {
+    // Vercel's Prisma Postgres integration injects POSTGRES_URL; DATABASE_URL wins when set (local/Docker).
+    super({
+      datasourceUrl: process.env.DATABASE_URL ?? process.env.POSTGRES_URL,
+    });
+  }
+
   async onModuleInit() {
     await this.$connect();
   }
