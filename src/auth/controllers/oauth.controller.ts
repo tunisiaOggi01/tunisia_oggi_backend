@@ -10,6 +10,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import type { Request, Response } from 'express';
 import { AuthService } from '../services/auth.service';
+import { setAuthCookies } from '../auth-cookies';
 
 /** Google OAuth2 entry point and callback — sets the same cookies as email login. */
 @Controller('auth')
@@ -41,20 +42,7 @@ export class OAuthController {
       const { token, csrfToken, refreshToken } =
         await this.authService.issueTokens(user.id, user);
 
-      const secure = process.env.NODE_ENV === 'production';
-      res.cookie('access_token', token, {
-        httpOnly: true,
-        secure,
-        sameSite: secure ? 'none' : 'lax',
-        maxAge: 15 * 60 * 1000,
-      });
-      res.cookie('refresh_token', refreshToken, {
-        httpOnly: true,
-        secure,
-        sameSite: secure ? 'none' : 'lax',
-        path: '/auth/refresh',
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
+      setAuthCookies(res, token, refreshToken);
 
       const frontendUrl = process.env.CORS_ORIGIN ?? 'http://localhost:5173';
       const redirectPath = redirect

@@ -13,6 +13,7 @@ import {
 import { Throttle, minutes } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { AuthService } from '../services/auth.service';
+import { setAuthCookies, clearAuthCookies } from '../auth-cookies';
 import { RefreshTokenService } from '../services/refresh-token.service';
 import {
   LoginDto,
@@ -33,23 +34,6 @@ export class AuthController {
     private refreshTokenService: RefreshTokenService,
   ) {}
 
-  private setCookies(res: Response, token: string, refreshToken: string) {
-    const secure = process.env.NODE_ENV === 'production';
-    res.cookie('access_token', token, {
-      httpOnly: true,
-      secure,
-      sameSite: secure ? 'none' : 'lax',
-      maxAge: 15 * 60 * 1000,
-    });
-    res.cookie('refresh_token', refreshToken, {
-      httpOnly: true,
-      secure,
-      sameSite: secure ? 'none' : 'lax',
-      path: '/auth/refresh',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-  }
-
   @Post('login')
   @HttpCode(200)
   @Throttle({ default: { limit: 10, ttl: minutes(1) } })
@@ -61,7 +45,7 @@ export class AuthController {
       dto.email,
       dto.password,
     );
-    this.setCookies(res, result.token, result.refreshToken);
+    setAuthCookies(res,result.token, result.refreshToken);
     return { user: result.user, csrfToken: result.csrfToken };
   }
 
@@ -129,7 +113,7 @@ export class AuthController {
     if (!raw) throw new UnauthorizedException('No refresh token');
     const { accessToken, csrfToken, newRefreshToken } =
       await this.refreshTokenService.rotate(raw);
-    this.setCookies(res, accessToken, newRefreshToken);
+    setAuthCookies(res,accessToken, newRefreshToken);
     return { csrfToken };
   }
 
@@ -138,8 +122,7 @@ export class AuthController {
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const raw = req.cookies?.refresh_token;
     if (raw) await this.refreshTokenService.revoke(raw);
-    res.clearCookie('access_token');
-    res.clearCookie('refresh_token', { path: '/auth/refresh' });
+    clearAuthCookies(res);
     return { success: true };
   }
 }
