@@ -52,12 +52,16 @@ export class UploadService {
       );
       stream.end(file.buffer);
     }).catch((error: unknown) => {
-      if (error instanceof Error) {
-        throw new BadRequestException(
-          `Upload rejected by storage provider: ${error.message}`,
-        );
-      }
-      throw new BadRequestException('Upload rejected by storage provider');
+      // Cloudinary reports failures (e.g. missing credentials) as plain { message, http_code } objects.
+      const message =
+        error && typeof error === 'object' && 'message' in error
+          ? String((error as { message: unknown }).message)
+          : '';
+      throw new BadRequestException(
+        message
+          ? `Upload rejected by storage provider: ${message}`
+          : 'Upload rejected by storage provider',
+      );
     });
 
     await this.prisma.pendingUpload.create({
