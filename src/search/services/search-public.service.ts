@@ -51,14 +51,12 @@ export class SearchPublicService {
       .sort((a, b) => b.count - a.count);
 
     return {
-      data: {
-        articles,
-        totalArticles,
-        page,
-        pageSize,
-        listings,
-        categoryCounts,
-      },
+      articles,
+      totalArticles,
+      page,
+      pageSize,
+      listings,
+      categoryCounts,
     };
   }
 }

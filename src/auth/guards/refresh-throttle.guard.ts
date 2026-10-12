@@ -25,6 +25,9 @@ setInterval(() => {
 export class RefreshThrottleGuard implements CanActivate {
   canActivate(ctx: ExecutionContext): boolean {
     const req = ctx.switchToHttp().getRequest();
+    // No cookie → the handler rejects with 401 and there is no token to brute-force.
+    // Counting these would 429 logged-out visitors, whose app probes refresh on every page load.
+    if (!req.cookies?.refresh_token) return true;
     const ip = req.ip ?? req.connection?.remoteAddress ?? 'unknown';
     const now = Date.now();
     const entry = store.get(ip);

@@ -113,7 +113,7 @@ export class AuthController {
     if (!raw) throw new UnauthorizedException('No refresh token');
     const { accessToken, csrfToken, newRefreshToken } =
       await this.refreshTokenService.rotate(raw);
-    setAuthCookies(res,accessToken, newRefreshToken);
+    setAuthCookies(res, accessToken, newRefreshToken);
     return { csrfToken };
   }
 
